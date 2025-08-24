@@ -1,0 +1,226 @@
+﻿
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Shared.Exceptions;
+using System.Reflection;
+
+namespace Infrastructure.Data.Repositories
+{
+    public class GenericRepository<T> where T : BaseEntity, new()
+    {
+        private readonly DbContext _context;
+        private readonly DbSet<T> _dbSet;
+
+        public GenericRepository(DbContext context)
+        {
+            _context = context;
+            _dbSet = context.Set<T>();
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync() 
+            => await _dbSet.ToListAsync();
+
+        public async Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int take, int skip)
+        {
+            return (
+                data: _dbSet.Skip(skip).Take(take),
+                totalCount: await _dbSet.CountAsync());
+        }
+
+        public async Task<T?> GetByIdAsync(Guid id) 
+            => await _dbSet.SingleOrDefaultAsync(x => x.Id == id);
+
+        public T? GetById(Guid id) => _dbSet.SingleOrDefault(x => x.Id == id);
+
+
+        public T? Insert(T entity)
+        {
+            entity.Created = entity.Updated = DateTime.UtcNow;
+            _dbSet.Add(entity);
+            this.Save();
+            return this.GetById(entity.Id);
+        }
+
+        public async Task<T?> InsertAsync(T entity)
+        {
+            entity.Created = entity.Updated = DateTime.UtcNow;
+            _dbSet.Add(entity);
+            await this.SaveAsync();
+            return await this.GetByIdAsync(entity.Id);
+        }
+
+        public async Task InsertWithOutSave(T entity)
+        {
+            entity.Created = entity.Updated = DateTime.UtcNow;
+            await _dbSet.AddAsync(entity);
+        }
+
+        public async Task<T> UpdateAsync(T entityToUpdate)
+        {
+            var entityUpdated = await this.GetByIdAsync(entityToUpdate.Id);
+            if (entityUpdated == null)
+            {
+                throw new NotFoundException();
+            }
+
+            PropertyInfo[] properties = typeof(T).GetProperties();
+
+            foreach (PropertyInfo property in properties)
+            {
+                if (property.Name == "Created" || property.Name == "Updated")
+                    continue;
+
+                object updatedValue = property.GetValue(entityToUpdate);
+                object originalValue = property.GetValue(entityUpdated);
+
+                if ((updatedValue == null && originalValue != null)
+                    || (updatedValue != null && !updatedValue.Equals(originalValue)))
+                {
+                    property.SetValue(entityUpdated, updatedValue);
+                }
+            }
+
+            entityUpdated.Updated = DateTime.UtcNow;
+            _context.Update(entityUpdated);
+            await this.SaveAsync();
+            return entityUpdated;
+        }
+
+        public async Task UpdateWithOutSaveAsync(T entityToUpdate)
+        {
+            var entityUpdated = await this.GetByIdAsync(entityToUpdate.Id);
+
+            PropertyInfo[] properties = typeof(T).GetProperties();
+
+            foreach (PropertyInfo property in properties)
+            {
+                if (property.Name == "Created" || property.Name == "Updated")
+                    continue;
+
+                object updatedValue = property.GetValue(entityToUpdate);
+                object originalValue = property.GetValue(entityUpdated);
+
+                if ((updatedValue == null && originalValue != null)
+                    || (updatedValue != null && !updatedValue.Equals(originalValue)))
+                {
+                    property.SetValue(entityUpdated, updatedValue);
+                }
+            }
+
+            entityUpdated.Updated = DateTime.UtcNow;
+            _context.Entry(entityUpdated).State = EntityState.Modified;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public async Task<T> UpsertAsync(T entity)
+        {
+            var existingEntity = await GetByIdAsync(entity.Id);
+
+            if (existingEntity == null)
+            {
+                entity.Created = entity.Updated = DateTime.UtcNow;
+                await _dbSet.AddAsync(entity);
+            }
+            else
+            {
+                PropertyInfo[] properties = typeof(T).GetProperties();
+
+                foreach (PropertyInfo property in properties)
+                {
+                    if (property.Name == "Created" || property.Name == "Updated")
+                        continue;
+
+                    object updatedValue = property.GetValue(entity);
+                    object originalValue = property.GetValue(existingEntity);
+
+                    if ((updatedValue == null && originalValue != null)
+                        || (updatedValue != null && !updatedValue.Equals(originalValue)))
+                    {
+                        property.SetValue(existingEntity, updatedValue);
+                    }
+                }
+
+                existingEntity.Updated = DateTime.UtcNow;
+                _context.Entry(existingEntity).State = EntityState.Modified;
+            }
+
+            await SaveAsync();
+
+            return await GetByIdAsync(entity.Id);
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public async Task<T> UpsertWithOutSaveAsync(T entity)
+        {
+            var existingEntity = await GetByIdAsync(entity.Id);
+
+            if (existingEntity == null)
+            {
+                entity.Created = entity.Updated = DateTime.UtcNow;
+                await _dbSet.AddAsync(entity);
+                return entity;
+            }
+            else
+            {
+                PropertyInfo[] properties = typeof(T).GetProperties();
+
+                foreach (PropertyInfo property in properties)
+                {
+                    if (property.Name == "Created" || property.Name == "Updated")
+                        continue;
+
+                    object updatedValue = property.GetValue(entity);
+                    object originalValue = property.GetValue(existingEntity);
+
+                    if ((updatedValue == null && originalValue != null)
+                        || (updatedValue != null && !updatedValue.Equals(originalValue)))
+                    {
+                        property.SetValue(existingEntity, updatedValue);
+                    }
+                }
+
+                existingEntity.Updated = DateTime.UtcNow;
+                _context.Entry(existingEntity).State = EntityState.Modified;
+                return existingEntity;
+            }
+        }
+
+
+        public void Delete(Guid id)
+        {
+            var entity = _dbSet.Single(e => e.Id == id);
+            Delete(entity);
+        }
+
+        public void Delete(T entity)
+        {
+            if (_context.Entry(entity).State == EntityState.Detached)
+            {
+                _dbSet.Attach(entity);
+            }
+            _dbSet.Remove(entity);
+            this.Save();
+        }
+
+        public void Save()
+        {
+            _context.SaveChanges();
+        }
+
+        public async Task SaveAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+
+
+}
