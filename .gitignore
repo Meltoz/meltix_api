@@ -54,7 +54,6 @@ wwwroot/lib/
 # ==========================
 # Entity Framework
 # ==========================
-Migrations/
 *.db
 *.mdf
 *.ldf
@@ -97,3 +96,8 @@ desktop.ini
 # Database Files
 # ==========================
 /Data
+
+# ==========================
+# Ressource Files
+# ==========================
+*.exe

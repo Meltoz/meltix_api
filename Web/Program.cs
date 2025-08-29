@@ -1,7 +1,8 @@
 using Application.Interfaces;
 using Application.Services;
-using Meltoz_infrastructure.Data;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Xabe.FFmpeg;
 
 namespace meltix_web
 {
@@ -15,6 +16,7 @@ namespace meltix_web
 
             // Add services to the container.
             services.AddScoped<IVideoService, VideoService>();
+            services.AddScoped<ICategoryService, CategoryService>();
 
             services.AddControllers();
 
@@ -36,6 +38,9 @@ namespace meltix_web
             services.AddDbContext<MeltixContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}"));
 
+            services.AddHostedService<FolderScanService>();
+
+            FFmpeg.SetExecutablesPath(".");
 
             // App generation<
             var app = builder.Build();

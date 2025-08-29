@@ -8,8 +8,8 @@ namespace Application.Mappings
     {
         public EntitiesToDtoProfile()
         {
-            CreateMap<VideoDTO, Video>()
-                .ReverseMap();
+            CreateMap<Video, VideoDTO>();
+            CreateMap<Category, CategoryDTO>();
         }
     }
 }

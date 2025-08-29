@@ -8,8 +8,8 @@ namespace Infrastructure.Data.Repositories
 {
     public class GenericRepository<T> where T : BaseEntity, new()
     {
-        private readonly DbContext _context;
-        private readonly DbSet<T> _dbSet;
+        protected readonly DbContext _context;
+        protected readonly DbSet<T> _dbSet;
 
         public GenericRepository(DbContext context)
         {
@@ -17,23 +17,23 @@ namespace Infrastructure.Data.Repositories
             _dbSet = context.Set<T>();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync() 
+        public virtual async Task<IEnumerable<T>> GetAllAsync() 
             => await _dbSet.ToListAsync();
 
-        public async Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int take, int skip)
+        public virtual async Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int skip, int take)
         {
             return (
-                data: _dbSet.Skip(skip).Take(take),
+                data: _dbSet.OrderBy(f => f.Created).Skip(skip).Take(take),
                 totalCount: await _dbSet.CountAsync());
         }
 
-        public async Task<T?> GetByIdAsync(Guid id) 
+        public virtual async Task<T?> GetByIdAsync(Guid id) 
             => await _dbSet.SingleOrDefaultAsync(x => x.Id == id);
 
-        public T? GetById(Guid id) => _dbSet.SingleOrDefault(x => x.Id == id);
+        public virtual T? GetById(Guid id) => _dbSet.SingleOrDefault(x => x.Id == id);
 
 
-        public T? Insert(T entity)
+        public virtual T? Insert(T entity)
         {
             entity.Created = entity.Updated = DateTime.UtcNow;
             _dbSet.Add(entity);
@@ -41,7 +41,7 @@ namespace Infrastructure.Data.Repositories
             return this.GetById(entity.Id);
         }
 
-        public async Task<T?> InsertAsync(T entity)
+        public virtual async Task<T?> InsertAsync(T entity)
         {
             entity.Created = entity.Updated = DateTime.UtcNow;
             _dbSet.Add(entity);
@@ -49,13 +49,13 @@ namespace Infrastructure.Data.Repositories
             return await this.GetByIdAsync(entity.Id);
         }
 
-        public async Task InsertWithOutSave(T entity)
+        public virtual async Task InsertWithOutSave(T entity)
         {
             entity.Created = entity.Updated = DateTime.UtcNow;
             await _dbSet.AddAsync(entity);
         }
 
-        public async Task<T> UpdateAsync(T entityToUpdate)
+        public virtual async Task<T> UpdateAsync(T entityToUpdate)
         {
             var entityUpdated = await this.GetByIdAsync(entityToUpdate.Id);
             if (entityUpdated == null)
@@ -86,7 +86,7 @@ namespace Infrastructure.Data.Repositories
             return entityUpdated;
         }
 
-        public async Task UpdateWithOutSaveAsync(T entityToUpdate)
+        public virtual async Task UpdateWithOutSaveAsync(T entityToUpdate)
         {
             var entityUpdated = await this.GetByIdAsync(entityToUpdate.Id);
 
@@ -116,7 +116,7 @@ namespace Infrastructure.Data.Repositories
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task<T> UpsertAsync(T entity)
+        public virtual async Task<T> UpsertAsync(T entity)
         {
             var existingEntity = await GetByIdAsync(entity.Id);
 
@@ -159,7 +159,7 @@ namespace Infrastructure.Data.Repositories
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task<T> UpsertWithOutSaveAsync(T entity)
+        public virtual async Task<T> UpsertWithOutSaveAsync(T entity)
         {
             var existingEntity = await GetByIdAsync(entity.Id);
 
@@ -195,13 +195,13 @@ namespace Infrastructure.Data.Repositories
         }
 
 
-        public void Delete(Guid id)
+        public virtual void Delete(Guid id)
         {
             var entity = _dbSet.Single(e => e.Id == id);
             Delete(entity);
         }
 
-        public void Delete(T entity)
+        public virtual void Delete(T entity)
         {
             if (_context.Entry(entity).State == EntityState.Detached)
             {
@@ -211,12 +211,12 @@ namespace Infrastructure.Data.Repositories
             this.Save();
         }
 
-        public void Save()
+        public virtual void Save()
         {
             _context.SaveChanges();
         }
 
-        public async Task SaveAsync()
+        public virtual async Task SaveAsync()
         {
             await _context.SaveChangesAsync();
         }

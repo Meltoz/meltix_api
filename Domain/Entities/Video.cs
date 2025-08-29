@@ -1,4 +1,6 @@
 ﻿
+using Shared;
+
 namespace Domain.Entities
 {
     public class Video : BaseEntity
@@ -9,6 +11,46 @@ namespace Domain.Entities
 
         public string Thumbnail { get; private set; } = string.Empty;
 
-        public ICollection<Category> Categories { get; private set; } = new List<Category>();
+        public string Slug { get; private set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public Guid? CategoryId { get; private set; }
+
+        public Category? Category { get; private set; }
+
+        private readonly List<Tag> _tags = new();
+        public IReadOnlyCollection<Tag> Tags => _tags;
+
+        public Video() { }
+
+        public Video(string path)
+        {
+            Title = Path = path;
+            Slug = SlugGenerator.Generate(path);
+        }
+        public Video(string path, string thumbnail)
+        {
+            Title = Path = path;
+            Slug = SlugGenerator.Generate(path);
+            Thumbnail = thumbnail;
+        }
+
+        public void AddTags(Tag tag)
+        {
+            if(!_tags.Contains(tag))
+                _tags.Add(tag);
+        }
+
+        public void RemoveTags(Tag tag)
+        {
+            _tags.Remove(tag);
+        }
+
+        public void ChangeTitle(string title)
+        {
+            Title = title;
+            Slug = SlugGenerator.Generate(title);
+        }
     }
 }

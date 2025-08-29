@@ -1,9 +1,10 @@
-﻿using Meltix_domain.Entities;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Diagnostics;
 
 
-namespace Meltoz_infrastructure.Data
+namespace Infrastructure.Data
 {
     public class MeltixContext : DbContext
     {
@@ -12,31 +13,35 @@ namespace Meltoz_infrastructure.Data
 
         public DbSet<Category> Categories { get; set; }
 
+        public DbSet<Tag> Tags { get; set; }
 
         public MeltixContext()
         {
-            
+
         }
 
-        public MeltixContext(DbContextOptions<MeltixContext> options) : base(options) { }
+        public MeltixContext(DbContextOptions<MeltixContext> options) : base(options)
+        {
+
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+     
+
+            modelBuilder.Entity<Video>()
+                .HasMany(v => v.Tags)
+                .WithMany(c => c.Videos)
+                .UsingEntity(v => v.ToTable("VideoTags"));
+
+            modelBuilder.Entity<Video>()
+                .HasOne(v => v.Category)
+                .WithMany(c => c.Videos)
+                .HasForeignKey(v => v.CategoryId);
+
+            modelBuilder.Entity<Tag>(t => t.HasIndex(t2 => t2.Value).IsUnique());
+
+            base.OnModelCreating(modelBuilder);
         }
-
-        private string GetSolutionDirectory()
-        {
-            var currentDir = Directory.GetCurrentDirectory();
-
-            // Chercher le fichier .sln en remontant dans l'arborescence
-            while (currentDir != null && !Directory.GetFiles(currentDir, "*.sln").Any())
-            {
-                currentDir = Directory.GetParent(currentDir)?.FullName;
-            }
-
-            return currentDir ?? throw new DirectoryNotFoundException("Solution directory not found");
-        }
-
     }
 }

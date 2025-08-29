@@ -1,20 +1,109 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using AutoMapper;
+using Domain.Entities;
+using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
-using Meltoz_infrastructure.Data;
-using Microsoft.EntityFrameworkCore.Design;
 using Shared;
+using System.Threading.Tasks;
+using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 
 namespace Application.Services
 {
     public class VideoService : IVideoService
     {
-        public readonly VideoRepository _videoRepo;
-        
+        private readonly VideoRepository _videoRepo;
+        private readonly IMapper _mapper;
+        private readonly string _pathToWatch = @"E:\ToDelete";
 
-        public VideoService(MeltixContext c)
+
+        public VideoService(MeltixContext c, IMapper m)
         {
-            _videoRepo = new VideoRepository(c);            
+            _videoRepo = new VideoRepository(c);
+            _mapper = m;
+        }
+
+        public async Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> Paginate(int pageIndex, int pageSize, string search)
+        {
+            var response = new ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>();
+            var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
+
+            var r = await _videoRepo.Search(skip, pageSize, search);
+
+            try
+            {
+                response.Response = (
+                    _mapper.Map<IEnumerable<VideoDTO>>(r.videos),
+                    r.totalCount);
+                response.Status = ServiceResponseStatus.Success;
+            }
+            catch(Exception ex)
+            {
+                response.Status = ServiceResponseStatus.Failure;
+            }
+
+
+            return response;
+        }
+
+        public async Task SyncFolderWithDatabaseAsync()
+        {
+
+            if (!Directory.Exists(_pathToWatch))
+            {
+                return;
+            }
+
+            var filesOnDisk = Directory.GetFiles(_pathToWatch)
+                                        .Where(f => f.EndsWith(".mp4"))
+                                       .Select(Path.GetFileName)
+                                       .ToHashSet();
+
+            var filesInDb = (await _videoRepo.GetAllAsync()).ToList();
+
+            // 1. Supprimer de la BDD les fichiers qui n'existent plus
+            var toDelete = filesInDb.Where(f => !filesOnDisk.Contains(f.Path)).ToList();
+            if (toDelete.Any())
+            {
+                foreach (var video in toDelete)
+                {
+                    _videoRepo.Delete(video.Id);
+                }
+            }
+
+            // 2. Ajouter les fichiers du disque qui ne sont pas en BDD
+            var dbFileNames = filesInDb.Select(f => f.Path).ToHashSet();
+
+            var filesToAdd = filesOnDisk.Where(f => !dbFileNames.Contains(f)).ToList();
+
+            foreach(var file in filesToAdd)
+            {
+                var thumbnail = await GetThumbnail(file);
+                var video = new Video(file, thumbnail);
+                await _videoRepo.InsertWithOutSave(video);
+            }
+
+            await _videoRepo.SaveAsync();
+        }
+
+        private async Task<string> GetThumbnail(string videoPath)
+        {
+            await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
+            var pathInput = Path.Combine(_pathToWatch, videoPath);
+            var mediaInfo = await FFmpeg.GetMediaInfo(pathInput);
+            var baseDirectoryPath = AppContext.BaseDirectory;
+            var ouputPath = Path.Combine(baseDirectoryPath, @$"..\..\..\..\Data\Thumbnails\{videoPath.Substring(0, videoPath.Length-4)}.jpg");
+            var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
+
+            var conversion = FFmpeg.Conversions.New()
+                     .AddStream(videoStream)
+                    .SetSeek(TimeSpan.FromSeconds(1))
+                    .AddParameter("-vframes 1")
+                    .SetOutput(ouputPath)
+                    .Start();
+
+            return @$"Data\Thumbnails\{videoPath}.jpg";
         }
     }
 }
