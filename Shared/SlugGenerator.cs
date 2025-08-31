@@ -13,7 +13,7 @@ namespace Shared
             if (string.IsNullOrWhiteSpace(title))
                 return string.Empty;
 
-            var withoutExtension = title.Split('.')[0];
+            var withoutExtension = Path.GetFileNameWithoutExtension(title);
 
             return withoutExtension
                 .ToLowerInvariant()

@@ -23,6 +23,24 @@ namespace Application.Services
             _mapper = m;
         }
 
+        public async Task<ServiceResponse<VideoDTO>> FindBySlug(string slug)
+        {
+            var response = new ServiceResponse<VideoDTO>();
+            try
+            {
+                var video = await _videoRepo.GetBySlug(slug);
+                response.Response = _mapper.Map<VideoDTO>(video);
+                response.Status = video == null ? ServiceResponseStatus.Warning : ServiceResponseStatus.Success;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+            }
+
+            return response;
+        }
+
         public async Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> Paginate(int pageIndex, int pageSize, string search)
         {
             var response = new ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>();
@@ -134,7 +152,8 @@ namespace Application.Services
             var pathInput = Path.Combine(_pathToWatch, videoPath);
             var mediaInfo = await FFmpeg.GetMediaInfo(pathInput);
             var baseDirectoryPath = AppContext.BaseDirectory;
-            var ouputPath = Path.Combine(baseDirectoryPath, @$"..\..\..\..\Data\Thumbnails\{videoPath.Substring(0, videoPath.Length-4)}.jpg");
+            var endPath = $@"Data\\Thumbnails\\{videoPath.Substring(0, videoPath.Length-4)}.jpg";
+            var ouputPath = Path.Combine(baseDirectoryPath, @$"..", "..", "..", "..", endPath );
             var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
 
             var conversion = FFmpeg.Conversions.New()
@@ -144,7 +163,7 @@ namespace Application.Services
                     .SetOutput(ouputPath)
                     .Start();
 
-            return @$"Data\Thumbnails\{videoPath}.jpg";
+            return endPath;
         }
     }
 }

@@ -3,6 +3,7 @@ using Application.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
+using Shared.Constants;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -44,7 +45,8 @@ namespace Web.Controllers
             {
                 return StatusCode(500);
             }
-            return Ok(new { videos = videoVM, totalCount = videos.totalCount });
+            Response.Headers.Append(AppConstants.HeaderTotalCount, videos.totalCount.ToString());
+            return Ok(videoVM);
         }
 
         [HttpGet]
@@ -53,6 +55,40 @@ namespace Web.Controllers
             await _videoService.SyncFolderWithDatabaseAsync();
 
             return Ok();
+        }
+
+        /// <summary>
+        /// Obtain thumbnail of video
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> GetThumbnail(string slug)
+        {
+            var responseGetBySlug = await _videoService.FindBySlug(slug);
+
+            if(responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
+            {
+                return StatusCode(500);
+            }
+            else if(responseGetBySlug.Status == ServiceResponseStatus.Warning)
+            {
+                return NotFound();
+            }
+
+            var video = responseGetBySlug.Response;
+
+            var path = AppContext.BaseDirectory;
+            
+            var filePath = Path.Combine(path,"..", "..", "..", "..", video.Thumbnail);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var contentType = GetContentType(filePath);
+            return File(bytes, contentType);
         }
 
         [HttpPatch]
@@ -112,6 +148,19 @@ namespace Web.Controllers
             }
 
             return Ok(videoReturned);
+        }
+
+        private string GetContentType(string path)
+        {
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            return ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                _ => "application/octet-stream",
+            };
         }
     }
 }

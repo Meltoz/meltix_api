@@ -9,6 +9,10 @@ namespace Infrastructure.Data.Repositories
         {
         }
 
+        public async Task<Video?> GetBySlug(string slug)
+        {
+            return await _dbSet.Where(v => v.Slug == slug).FirstOrDefaultAsync();
+        }
 
         public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search)
         {

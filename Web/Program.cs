@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Application.Services;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Shared.Constants;
 using Xabe.FFmpeg;
 
 namespace meltix_web
@@ -68,6 +69,14 @@ namespace meltix_web
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseCors(c => c
+                .WithOrigins("http://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders(AppConstants.HeaderTotalCount)
+                .AllowCredentials()
+            );
 
             app.UseHttpsRedirection();
 
