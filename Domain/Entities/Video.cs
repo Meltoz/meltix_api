@@ -15,9 +15,9 @@ namespace Domain.Entities
 
         public string Description { get; set; } = string.Empty;
 
-        public Guid? CategoryId { get; private set; }
+        public Guid? CategoryId { get; set; }
 
-        public Category? Category { get; private set; }
+        public Category? Category { get; set; }
 
         private readonly List<Tag> _tags = new();
         public IReadOnlyCollection<Tag> Tags => _tags;

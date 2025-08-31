@@ -63,6 +63,41 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<ServiceResponse<CategoryDTO>> GetByIdAsync(Guid id)
+        {
+            var response = new ServiceResponse<CategoryDTO>();
+            try
+            {
+                var category = await _categoryRepo.GetByIdAsync(id);
+                response.Response = _mapper.Map<CategoryDTO>(category);
+                response.Status = ServiceResponseStatus.Success;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<CategoryDTO>> GetByNameAsync(string name)
+        {
+            var response = new ServiceResponse<CategoryDTO>();
+
+            try
+            {
+                var category = await _categoryRepo.ByNameAsync(name);
+                response.Response = _mapper.Map<CategoryDTO>(category);
+                response.Status = ServiceResponseStatus.Success;
+            }
+            catch(Exception ex)
+            {
+                response.Message= ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalCount)>> Search(int pageIndex, int pageSize, string categoryName)
         {
             var response = new ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>();

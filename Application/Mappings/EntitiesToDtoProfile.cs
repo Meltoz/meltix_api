@@ -10,6 +10,8 @@ namespace Application.Mappings
         {
             CreateMap<Video, VideoDTO>();
             CreateMap<Category, CategoryDTO>();
+
+
         }
     }
 }

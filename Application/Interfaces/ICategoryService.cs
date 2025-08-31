@@ -12,5 +12,9 @@ namespace Application.Interfaces
         public Task<ServiceResponse<CategoryDTO>> UpdateCategory(CategoryDTO categoryToUpdate);
 
         public ServiceResponse<bool> DeleteCategory(Guid idCategory);
+
+        public Task<ServiceResponse<CategoryDTO>> GetByIdAsync(Guid id);
+
+        public Task<ServiceResponse<CategoryDTO>> GetByNameAsync(string name);
     }
 }

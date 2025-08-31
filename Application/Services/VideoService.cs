@@ -5,7 +5,6 @@ using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Shared;
-using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 
@@ -85,6 +84,48 @@ namespace Application.Services
             }
 
             await _videoRepo.SaveAsync();
+        }
+
+        public async Task<ServiceResponse<VideoDTO>> UpdateVideo(VideoDTO videoDTO)
+        {
+            var response = new ServiceResponse<VideoDTO>();
+
+            var videoEntity = await _videoRepo.GetByIdAsync(videoDTO.Id);
+            try
+            {
+                _mapper.Map(videoDTO, videoEntity);
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+                return response;
+            }
+
+            if (videoEntity == null)
+            {
+                response.Message = "Video not found";
+                response.Status = ServiceResponseStatus.Failure;
+                return response;
+            }
+            if(videoEntity.Title != videoDTO.Title)
+            {
+                videoEntity.ChangeTitle(videoDTO.Title);
+            }
+            
+            try
+            {
+                var video = await _videoRepo.UpdateAsync(videoEntity);
+                response.Response = _mapper.Map<VideoDTO>(video);
+                response.Status = ServiceResponseStatus.Success;
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+            }
+            
+            return response;
         }
 
         private async Task<string> GetThumbnail(string videoPath)
