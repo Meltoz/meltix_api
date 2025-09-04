@@ -13,6 +13,8 @@ namespace Application.DTOs
         public string Thumbnail { get; set; } = string.Empty;
 
         public string Slug { get; set; } = string.Empty;
+        
+        public int Duration { get; set; }
 
         public List<Tag> Tags { get; set; } = new List<Tag>();
 

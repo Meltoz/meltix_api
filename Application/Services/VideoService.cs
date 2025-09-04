@@ -96,8 +96,8 @@ namespace Application.Services
 
             foreach(var file in filesToAdd)
             {
-                var thumbnail = await GetThumbnail(file);
-                var video = new Video(file, thumbnail);
+                var videoInfo = await GetVideoInfo(file);
+                var video = new Video(file, videoInfo.ThumbnailPath, videoInfo.Duration);
                 await _videoRepo.InsertWithOutSave(video);
             }
 
@@ -146,8 +146,9 @@ namespace Application.Services
             return response;
         }
 
-        private async Task<string> GetThumbnail(string videoPath)
+        private async Task<VideoInfoResult> GetVideoInfo(string videoPath)
         {
+            var videoInfo = new VideoInfoResult();
             await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
             var pathInput = Path.Combine(_pathToWatch, videoPath);
             var mediaInfo = await FFmpeg.GetMediaInfo(pathInput);
@@ -163,7 +164,16 @@ namespace Application.Services
                     .SetOutput(ouputPath)
                     .Start();
 
-            return endPath;
+            videoInfo.Duration = (int)mediaInfo.Duration.TotalSeconds;
+            videoInfo.ThumbnailPath = endPath;
+            return videoInfo;
         }
+    }
+
+    internal class VideoInfoResult
+    {
+        public string ThumbnailPath { get; set; }
+
+        public int Duration { get; set; }
     }
 }

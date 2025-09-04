@@ -15,6 +15,8 @@ namespace Domain.Entities
 
         public string Description { get; set; } = string.Empty;
 
+        public int Duration { get; private set; }
+
         public Guid? CategoryId { get; set; }
 
         public Category? Category { get; set; }
@@ -29,11 +31,14 @@ namespace Domain.Entities
             Title = Path = path;
             Slug = SlugGenerator.Generate(path);
         }
-        public Video(string path, string thumbnail)
+        public Video(string path, string thumbnail) : this(path)
         {
-            Title = Path = path;
-            Slug = SlugGenerator.Generate(path);
             Thumbnail = thumbnail;
+        }
+
+        public Video(string path, string thumbnail, int duration) :this(path, thumbnail)
+        {
+            Duration = duration;
         }
 
         public void AddTags(Tag tag)

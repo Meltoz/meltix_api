@@ -36,10 +36,10 @@ namespace Web.Controllers
             }
 
             var videos = responseVideosPaginate.Response;
-            IEnumerable<VideoVM> videoVM;
+            IEnumerable<VideoCardVM> videoVM;
             try
             {
-                videoVM = _mapper.Map<IEnumerable<VideoVM>>(videos.videos);
+                videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
             }
             catch (Exception ex)
             {
@@ -47,6 +47,40 @@ namespace Web.Controllers
             }
             Response.Headers.Append(AppConstants.HeaderTotalCount, videos.totalCount.ToString());
             return Ok(videoVM);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVideo(string slug)
+        {
+            if (string.IsNullOrEmpty(slug))
+            {
+                return BadRequest();
+            }
+
+            var responseFindVideo = await _videoService.FindBySlug(slug);
+            
+            if(responseFindVideo.Status == ServiceResponseStatus.Failure)
+            {
+                return StatusCode(500);
+            }
+            else if(responseFindVideo.Status  == ServiceResponseStatus.Warning)
+            {
+                return NotFound();
+            }
+
+            var videoDTO = responseFindVideo.Response;
+            VideoVM video;
+
+            try
+            {
+                video = _mapper.Map<VideoVM>(videoDTO);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500);
+            }
+
+            return Ok(video);
         }
 
         [HttpGet]

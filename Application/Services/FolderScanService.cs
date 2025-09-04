@@ -28,7 +28,7 @@ namespace Application.Services
                     
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(3600), stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
 

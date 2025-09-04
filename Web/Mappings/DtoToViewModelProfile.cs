@@ -14,6 +14,9 @@ namespace Web.Mappings
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : "Uncategorised"));
 
             CreateMap<CategoryDTO, CategoryVM>();
+
+            CreateMap<VideoDTO, VideoCardVM>()
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : "No Category"));
         }
     }
 }
