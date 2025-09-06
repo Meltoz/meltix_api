@@ -58,12 +58,12 @@ namespace Web.Controllers
             }
 
             var responseFindVideo = await _videoService.FindBySlug(slug);
-            
-            if(responseFindVideo.Status == ServiceResponseStatus.Failure)
+
+            if (responseFindVideo.Status == ServiceResponseStatus.Failure)
             {
                 return StatusCode(500);
             }
-            else if(responseFindVideo.Status  == ServiceResponseStatus.Warning)
+            else if (responseFindVideo.Status == ServiceResponseStatus.Warning)
             {
                 return NotFound();
             }
@@ -75,7 +75,7 @@ namespace Web.Controllers
             {
                 video = _mapper.Map<VideoVM>(videoDTO);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500);
             }
@@ -101,11 +101,11 @@ namespace Web.Controllers
         {
             var responseGetBySlug = await _videoService.FindBySlug(slug);
 
-            if(responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
+            if (responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
             {
                 return StatusCode(500);
             }
-            else if(responseGetBySlug.Status == ServiceResponseStatus.Warning)
+            else if (responseGetBySlug.Status == ServiceResponseStatus.Warning)
             {
                 return NotFound();
             }
@@ -113,8 +113,8 @@ namespace Web.Controllers
             var video = responseGetBySlug.Response;
 
             var path = AppContext.BaseDirectory;
-            
-            var filePath = Path.Combine(path,"..", "..", "..", "..", video.Thumbnail);
+
+            var filePath = Path.Combine(path, "..", "..", "..", "..", video.Thumbnail);
 
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
@@ -129,12 +129,12 @@ namespace Web.Controllers
         public async Task<IActionResult> UpdateVideo([FromForm] VideoRequestVM video)
         {
             // Checking
-            if(!video.CategoryId.HasValue && string.IsNullOrEmpty(video.CategoryName))
+            if (!video.CategoryId.HasValue && string.IsNullOrEmpty(video.CategoryName))
             {
                 return BadRequest();
             }
 
-            if(video.Thumbnail is null && video.Img is null)
+            if (video.Thumbnail is null && video.Img is null)
             {
                 return BadRequest();
             }
@@ -152,7 +152,7 @@ namespace Web.Controllers
             ServiceResponse<CategoryDTO> responseCategory;
             if (video.CategoryId.HasValue)
             {
-                responseCategory =  await _categoryService.GetByIdAsync(video.CategoryId.Value);
+                responseCategory = await _categoryService.GetByIdAsync(video.CategoryId.Value);
             }
             else
             {
@@ -182,6 +182,41 @@ namespace Web.Controllers
             }
 
             return Ok(videoReturned);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Recommendations(string slug, int pageIndex, int pageSize)
+        {
+            if (pageIndex < 0 || pageSize < 1 || string.IsNullOrEmpty(slug))
+                return BadRequest();
+            var responseVideo = await _videoService.FindBySlug(slug);
+
+            if (responseVideo == null || responseVideo.Status != ServiceResponseStatus.Success)
+            {
+                return StatusCode(500);
+            }
+            var videoReference = responseVideo.Response;
+
+            var responseRecommendation = await _videoService.SearchRecommendations(pageIndex, pageSize, videoReference);
+            if(responseRecommendation == null || responseRecommendation.Status != ServiceResponseStatus.Success)
+            {
+                return StatusCode(500);
+            }
+            var recommendation = responseRecommendation.Response;
+
+            IEnumerable<VideoCardVM> videosCards;
+            try
+            {
+                videosCards = _mapper.Map<IEnumerable<VideoCardVM>>(recommendation.videos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500);
+            }
+
+            Response.Headers.Append(AppConstants.HeaderTotalCount, recommendation.totalCount.ToString());
+
+            return Ok(videosCards);
         }
 
         private string GetContentType(string path)
