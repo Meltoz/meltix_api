@@ -64,6 +64,29 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> SearchRecommendations(int pageIndex, int pageSize, VideoDTO videoReference)
+        {
+            var response = new ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>();
+            var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
+
+            try
+            {
+                var video = _mapper.Map<Video>(videoReference);
+                video.Id = videoReference.Id;
+                var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
+                var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
+                response.Response = (videos, data.totalCount);
+                response.Status = ServiceResponseStatus.Success;
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+                response.Status = ServiceResponseStatus.Failure;
+            }
+            return response;
+
+        }
+
         public async Task SyncFolderWithDatabaseAsync()
         {
 

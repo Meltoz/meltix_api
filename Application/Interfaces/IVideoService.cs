@@ -12,5 +12,7 @@ namespace Application.Interfaces
         public Task SyncFolderWithDatabaseAsync();
 
         public Task<ServiceResponse<VideoDTO>> UpdateVideo(VideoDTO videoDTO);
+
+        public Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> SearchRecommendations(int pageIndex, int pageSize, VideoDTO videoReference);
     }
 }
