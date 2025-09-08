@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using AutoMapper;
+using meltix_web.Constantes;
 using Web.ViewModels;
 
 namespace Web.Mappings
@@ -11,12 +12,12 @@ namespace Web.Mappings
 
             CreateMap<VideoDTO, VideoVM>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(x => x.Value)))
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : "Uncategorised"));
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ApiConstantes.NoCategory));
 
             CreateMap<CategoryDTO, CategoryVM>();
 
             CreateMap<VideoDTO, VideoCardVM>()
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : "No Category"));
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ApiConstantes.NoCategory));
         }
     }
 }

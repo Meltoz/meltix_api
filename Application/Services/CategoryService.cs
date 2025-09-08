@@ -5,6 +5,8 @@ using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Shared;
+using Shared.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.Services
 {
@@ -47,7 +49,7 @@ namespace Application.Services
         public ServiceResponse<bool> DeleteCategory(Guid idCategory)
         {
             var response = new ServiceResponse<bool>();
-            
+
             try
             {
                 _categoryRepo.Delete(idCategory);
@@ -90,9 +92,9 @@ namespace Application.Services
                 response.Response = _mapper.Map<CategoryDTO>(category);
                 response.Status = ServiceResponseStatus.Success;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                response.Message= ex.Message;
+                response.Message = ex.Message;
                 response.Status = ServiceResponseStatus.Failure;
             }
             return response;
@@ -100,29 +102,37 @@ namespace Application.Services
 
         public async Task<ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalCount)>> Search(int pageIndex, int pageSize, string categoryName)
         {
-            var response = new ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>();
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
             try
             {
                 var r = await _categoryRepo.Search(skip, pageSize, categoryName);
                 var categories = _mapper.Map<IEnumerable<CategoryDTO>>(r.categories);
-                response.Response = (categories, r.totalCount);
-                response.Status = ServiceResponseStatus.Success;
+                return ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>.Success((categories, r.totalCount));
             }
             catch (Exception ex)
             {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
+                return ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>.Failure(ex.Message);
             }
-
-            return response;
-
         }
 
-        public Task<ServiceResponse<CategoryDTO>> UpdateCategory(CategoryDTO categoryToUpdate)
+        public async Task<CategoryDTO> UpdateCategory(CategoryDTO categoryToUpdate)
         {
-            throw new NotImplementedException();
+            var category = await _categoryRepo.GetByIdAsync(categoryToUpdate.Id);
+
+            if (category == null)
+            {
+                throw new EntityNotFoundException($"Category with {categoryToUpdate.Id} not found");
+            }
+
+            if (string.IsNullOrWhiteSpace(categoryToUpdate.Name))
+                throw new ValidationException("Category name cannot be empty.");
+
+            category.ChangeName(categoryToUpdate.Name);
+
+            var categoryUpdate = await _categoryRepo.UpdateAsync(category);
+
+            return _mapper.Map<CategoryDTO>(categoryUpdate);
         }
     }
 }

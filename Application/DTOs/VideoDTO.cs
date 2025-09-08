@@ -16,6 +16,8 @@ namespace Application.DTOs
         
         public int Duration { get; set; }
 
+        public string Path { get; set; } = string.Empty;
+
         public List<Tag> Tags { get; set; } = new List<Tag>();
 
         public CategoryDTO Category { get; set; }

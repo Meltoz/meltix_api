@@ -9,7 +9,7 @@ namespace Application.Interfaces
 
         public Task<ServiceResponse<CategoryDTO>> AddCategory(string categoryName);
 
-        public Task<ServiceResponse<CategoryDTO>> UpdateCategory(CategoryDTO categoryToUpdate);
+        public Task<CategoryDTO> UpdateCategory(CategoryDTO categoryToUpdate);
 
         public ServiceResponse<bool> DeleteCategory(Guid idCategory);
 
