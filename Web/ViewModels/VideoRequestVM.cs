@@ -16,19 +16,16 @@ namespace Web.ViewModels
 
         public IFormFile? Img { get; set; }
 
-        [Required]
-        public string Thumbnail { get; set; } = string.Empty;
-
         public Guid? CategoryId { get; set; }
-        public string? CategoryName { get; set; }
+        public string? Category { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (CategoryId == null && string.IsNullOrWhiteSpace(CategoryName))
+            if (CategoryId == null && string.IsNullOrWhiteSpace(Category))
             {
                 yield return new ValidationResult(
                     "Either CategoryId or CategoryName must be provided.",
-                    new[] { nameof(CategoryId), nameof(CategoryName) }
+                    new[] { nameof(CategoryId), nameof(Category) }
                 );
             }
         }

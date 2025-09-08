@@ -10,7 +10,8 @@ namespace Web.Mappings
         {
             CreateMap<VideoRequestVM, VideoDTO>()
                 .ForMember(dest => dest.Duration, opt => opt.Ignore())
-                .ForMember(dest => dest.Path, opt => opt.Ignore());
+                .ForMember(dest => dest.Path, opt => opt.Ignore())
+                .ForMember(dest => dest.Category, opt => opt.Ignore());
 
             CreateMap<CategoryVM, CategoryDTO>();
         }

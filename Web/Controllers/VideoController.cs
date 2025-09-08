@@ -85,7 +85,7 @@ namespace Web.Controllers
         [HttpPatch]
         public async Task<IActionResult> UpdateVideo([FromForm] VideoRequestVM video)
         {
-            if(!ModelState.IsValid) 
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             VideoDTO videoDTO = _mapper.Map<VideoDTO>(video);
@@ -97,14 +97,14 @@ namespace Web.Controllers
             }
             else
             {
-                category = await _categoryService.GetByNameAsync(video.CategoryName);
+                category = await _categoryService.GetByNameAsync(video.Category);
             }
 
             videoDTO.Category = category;
 
             var videoUpdated = await _videoService.UpdateVideoAsync(videoDTO);
 
-            return Ok(_mapper.Map<VideoVM>(videoDTO));
+            return Ok(_mapper.Map<VideoVM>(videoDTO)); //
         }
 
         [HttpGet]
