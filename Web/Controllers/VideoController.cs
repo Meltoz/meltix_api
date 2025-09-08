@@ -1,9 +1,11 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 using Shared.Constants;
+using System.IO;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -50,7 +52,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetVideo(string slug)
+        public async Task<IActionResult> GetDetail(string slug)
         {
             if (string.IsNullOrEmpty(slug))
             {
@@ -217,6 +219,28 @@ namespace Web.Controllers
             Response.Headers.Append(AppConstants.HeaderTotalCount, recommendation.totalCount.ToString());
 
             return Ok(videosCards);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetVideo(string slug)
+        {
+            var responseGetBySlug = await _videoService.FindBySlug(slug);
+
+            if (responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
+            {
+                return StatusCode(500);
+            }
+            else if (responseGetBySlug.Status == ServiceResponseStatus.Warning)
+            {
+                return NotFound();
+            }
+
+            var videoFile = responseGetBySlug.Response;
+            var path = AppContext.BaseDirectory;
+            var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Title}");
+
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return File(fileStream, "video/mp4", enableRangeProcessing: true);
         }
 
         private string GetContentType(string path)
