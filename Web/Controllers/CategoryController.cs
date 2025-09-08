@@ -25,34 +25,23 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? name)
         {
-            var responseSearch = await _categoryService.Search(0, 20, name ?? "");
-            if (responseSearch.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            var categoriesDTO = responseSearch.Response;
-            IEnumerable<CategoryVM> categories;
+            var categoriesDtos = await _categoryService.SearchAsync(0, 20, name ?? "");
 
-            try
-            {
-                categories = _mapper.Map<IEnumerable<CategoryVM>>(categoriesDTO.categories);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
-            return Ok(new { categories = categories, totalCount = categoriesDTO.totalCount });
+            var categories = _mapper.Map<IEnumerable<CategoryVM>>(categoriesDtos.categories);
+
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, categoriesDtos.totalCount.ToString());
+            return Ok(categories);
         }
 
         [HttpPost]
-        public async Task<IActionResult> StoreCategory([FromBody] string name)
+        public async Task<IActionResult> StoreCategory([FromBody]CategoryVM category)
         {
-            var response = await _categoryService.AddCategory(name);
-            if (response.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            return Ok(response.Response);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var categoryAdded = await _categoryService.AddCategoryAsync(category.Name);
+           
+            return Ok(_mapper.Map<CategoryVM>(categoryAdded));
         }
 
 
@@ -65,12 +54,9 @@ namespace Web.Controllers
             var dto = _mapper.Map<CategoryDTO>(category);
             dto.Id = id;
 
-            var updatedCategory = await _categoryService.UpdateCategory(dto);
+            var updatedCategory = await _categoryService.UpdateCategoryAsync(dto);
 
             return Ok(_mapper.Map<CategoryVM>(updatedCategory));
         }
-
-
-
     }
 }

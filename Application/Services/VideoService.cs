@@ -4,7 +4,7 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
-using Shared;
+using Shared.Exceptions;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 
@@ -23,68 +23,38 @@ namespace Application.Services
             _mapper = m;
         }
 
-        public async Task<ServiceResponse<VideoDTO>> FindBySlug(string slug)
+        public async Task<VideoDTO> FindBySlugAsync(string slug)
         {
-            var response = new ServiceResponse<VideoDTO>();
-            try
-            {
-                var video = await _videoRepo.GetBySlug(slug);
-                response.Response = _mapper.Map<VideoDTO>(video);
-                response.Status = video == null ? ServiceResponseStatus.Warning : ServiceResponseStatus.Success;
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
+            var video = await _videoRepo.GetBySlug(slug);
+            if (video == null)
+                throw new EntityNotFoundException($"Video with slug: '{slug}' not found");
 
-            return response;
+            return _mapper.Map<VideoDTO>(video);
         }
 
-        public async Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> Paginate(int pageIndex, int pageSize, string search)
+        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search)
         {
-            var response = new ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>();
+
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
             var r = await _videoRepo.Search(skip, pageSize, search);
 
-            try
-            {
-                response.Response = (
-                    _mapper.Map<IEnumerable<VideoDTO>>(r.videos),
-                    r.totalCount);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch(Exception ex)
-            {
-                response.Status = ServiceResponseStatus.Failure;
-            }
-
-
-            return response;
+            return (
+                _mapper.Map<IEnumerable<VideoDTO>>(r.videos),
+                r.totalCount);
         }
 
-        public async Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> SearchRecommendations(int pageIndex, int pageSize, VideoDTO videoReference)
+        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference)
         {
-            var response = new ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>();
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
-            try
-            {
-                var video = _mapper.Map<Video>(videoReference);
-                video.Id = videoReference.Id;
-                var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
-                var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
-                response.Response = (videos, data.totalCount);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch(Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
-            return response;
+            var video = _mapper.Map<Video>(videoReference);
+            video.Id = videoReference.Id;
 
+            var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
+
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
+            return (videos, data.totalCount);
         }
 
         public async Task SyncFolderWithDatabaseAsync()
@@ -117,7 +87,7 @@ namespace Application.Services
 
             var filesToAdd = filesOnDisk.Where(f => !dbFileNames.Contains(f)).ToList();
 
-            foreach(var file in filesToAdd)
+            foreach (var file in filesToAdd)
             {
                 var videoInfo = await GetVideoInfo(file);
                 var video = new Video(file, videoInfo.ThumbnailPath, videoInfo.Duration);
@@ -127,46 +97,22 @@ namespace Application.Services
             await _videoRepo.SaveAsync();
         }
 
-        public async Task<ServiceResponse<VideoDTO>> UpdateVideo(VideoDTO videoDTO)
+        public async Task<VideoDTO> UpdateVideoAsync(VideoDTO videoDTO)
         {
-            var response = new ServiceResponse<VideoDTO>();
-
             var videoEntity = await _videoRepo.GetByIdAsync(videoDTO.Id);
-            try
-            {
-                _mapper.Map(videoDTO, videoEntity);
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-                return response;
-            }
-
             if (videoEntity == null)
-            {
-                response.Message = "Video not found";
-                response.Status = ServiceResponseStatus.Failure;
-                return response;
-            }
-            if(videoEntity.Title != videoDTO.Title)
+                throw new EntityNotFoundException($"Video with id '{videoDTO.Id}' not found");
+
+            if (videoEntity.Title != videoDTO.Title)
             {
                 videoEntity.ChangeTitle(videoDTO.Title);
             }
-            
-            try
-            {
-                var video = await _videoRepo.UpdateAsync(videoEntity);
-                response.Response = _mapper.Map<VideoDTO>(video);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch(Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
-            
-            return response;
+
+            videoEntity.Description = videoDTO.Description;
+            videoEntity.CategoryId = videoDTO.Category.Id;
+            var video = await _videoRepo.UpdateAsync(videoEntity);
+
+            return _mapper.Map<VideoDTO>(video);
         }
 
         private async Task<VideoInfoResult> GetVideoInfo(string videoPath)
@@ -176,8 +122,8 @@ namespace Application.Services
             var pathInput = Path.Combine(_pathToWatch, videoPath);
             var mediaInfo = await FFmpeg.GetMediaInfo(pathInput);
             var baseDirectoryPath = AppContext.BaseDirectory;
-            var endPath = $@"Data\\Thumbnails\\{videoPath.Substring(0, videoPath.Length-4)}.jpg";
-            var ouputPath = Path.Combine(baseDirectoryPath, @$"..", "..", "..", "..", endPath );
+            var endPath = $@"Data\\Thumbnails\\{videoPath.Substring(0, videoPath.Length - 4)}.jpg";
+            var ouputPath = Path.Combine(baseDirectoryPath, @$"..", "..", "..", "..", endPath);
             var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
 
             var conversion = FFmpeg.Conversions.New()

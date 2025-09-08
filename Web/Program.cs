@@ -1,6 +1,7 @@
 using Application.Interfaces;
 using Application.Services;
 using Infrastructure.Data;
+using meltix_web.Constantes;
 using Microsoft.EntityFrameworkCore;
 using Shared.Constants;
 using Web.Middewares;
@@ -75,7 +76,7 @@ namespace meltix_web
                 .WithOrigins("http://localhost:3000")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .WithExposedHeaders(AppConstants.HeaderTotalCount)
+                .WithExposedHeaders(ApiConstantes.HeaderTotalCount)
                 .AllowCredentials()
             );
 

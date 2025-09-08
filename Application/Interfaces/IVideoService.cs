@@ -5,14 +5,16 @@ namespace Application.Interfaces
 {
     public interface IVideoService
     {
-        public Task<ServiceResponse<VideoDTO>> FindBySlug(string slug);
+        public Task<VideoDTO> FindBySlugAsync(string slug);
 
-        public Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> Paginate(int pageIndex, int pageSize, string search);
+        public Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search);
+
+        public Task<(IEnumerable<VideoDTO> videos, int totalCount)> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference);
 
         public Task SyncFolderWithDatabaseAsync();
 
-        public Task<ServiceResponse<VideoDTO>> UpdateVideo(VideoDTO videoDTO);
+        public Task<VideoDTO> UpdateVideoAsync(VideoDTO videoDTO);
 
-        public Task<ServiceResponse<(IEnumerable<VideoDTO> videos, int totalCount)>> SearchRecommendations(int pageIndex, int pageSize, VideoDTO videoReference);
+
     }
 }

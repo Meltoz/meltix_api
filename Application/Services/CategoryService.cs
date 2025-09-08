@@ -21,102 +21,61 @@ namespace Application.Services
             _mapper = m;
         }
 
-        public async Task<ServiceResponse<CategoryDTO>> AddCategory(string categoryName)
+        public async Task<CategoryDTO> AddCategoryAsync(string categoryName)
         {
-            var response = new ServiceResponse<CategoryDTO>();
             var c = new Category(categoryName);
 
-            try
-            {
-                c = await _categoryRepo.InsertAsync(c);
-                response.Response = _mapper.Map<CategoryDTO>(c);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch (InvalidOperationException ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
+            if (string.IsNullOrEmpty(categoryName.Trim()))
+                throw new ValidationException($"Category name not to be empty");
 
-            return response;
+            var category = await _categoryRepo.InsertAsync(c);
+
+            return _mapper.Map<CategoryDTO>(category);
         }
 
-        public ServiceResponse<bool> DeleteCategory(Guid idCategory)
+        public bool DeleteCategory(Guid idCategory)
         {
-            var response = new ServiceResponse<bool>();
+            var categoryToDelete = _categoryRepo.GetById(idCategory);
 
-            try
-            {
-                _categoryRepo.Delete(idCategory);
-                response.Response = true;
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
+            if (categoryToDelete is null)
+                throw new EntityNotFoundException($"Category not found with id {idCategory}");
 
-            return response;
+
+            _categoryRepo.Delete(idCategory);
+
+            return true;
         }
 
-        public async Task<ServiceResponse<CategoryDTO>> GetByIdAsync(Guid id)
+        public async Task<CategoryDTO> GetByIdAsync(Guid id)
         {
-            var response = new ServiceResponse<CategoryDTO>();
-            try
-            {
-                var category = await _categoryRepo.GetByIdAsync(id);
-                response.Response = _mapper.Map<CategoryDTO>(category);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
-            return response;
+            var category = await _categoryRepo.GetByIdAsync(id);
+            if (category is null)
+                throw new EntityNotFoundException($"Category with id '{id}' doesnt exist");
+
+            return _mapper.Map<CategoryDTO>(category);
         }
 
-        public async Task<ServiceResponse<CategoryDTO>> GetByNameAsync(string name)
+        public async Task<CategoryDTO> GetByNameAsync(string name)
         {
-            var response = new ServiceResponse<CategoryDTO>();
+            var category = await _categoryRepo.ByNameAsync(name);
+            if (category is null)
+                throw new EntityNotFoundException($"Category with name '{name}' doesnt exists");
 
-            try
-            {
-                var category = await _categoryRepo.ByNameAsync(name);
-                response.Response = _mapper.Map<CategoryDTO>(category);
-                response.Status = ServiceResponseStatus.Success;
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-                response.Status = ServiceResponseStatus.Failure;
-            }
-            return response;
+            return _mapper.Map<CategoryDTO>(category);
+
         }
 
-        public async Task<ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalCount)>> Search(int pageIndex, int pageSize, string categoryName)
+        public async Task<(IEnumerable<CategoryDTO> categories, int totalCount)> SearchAsync(int pageIndex, int pageSize, string categoryName)
         {
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
-            try
-            {
-                var r = await _categoryRepo.Search(skip, pageSize, categoryName);
-                var categories = _mapper.Map<IEnumerable<CategoryDTO>>(r.categories);
-                return ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>.Success((categories, r.totalCount));
-            }
-            catch (Exception ex)
-            {
-                return ServiceResponse<(IEnumerable<CategoryDTO> categories, int totalcount)>.Failure(ex.Message);
-            }
+            var r = await _categoryRepo.Search(skip, pageSize, categoryName);
+            var categories = _mapper.Map<IEnumerable<CategoryDTO>>(r.categories);
+
+            return (categories, r.totalCount);
         }
 
-        public async Task<CategoryDTO> UpdateCategory(CategoryDTO categoryToUpdate)
+        public async Task<CategoryDTO> UpdateCategoryAsync(CategoryDTO categoryToUpdate)
         {
             var category = await _categoryRepo.GetByIdAsync(categoryToUpdate.Id);
 

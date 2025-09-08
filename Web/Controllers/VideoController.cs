@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
+using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 using Shared.Constants;
@@ -31,58 +32,23 @@ namespace Web.Controllers
             if (pageIndex < 0 || pageSize < 1)
                 return BadRequest();
 
-            var responseVideosPaginate = await _videoService.Paginate(pageIndex, pageSize, search ?? "");
-            if (responseVideosPaginate.Status != Shared.ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
+            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "");
 
-            var videos = responseVideosPaginate.Response;
-            IEnumerable<VideoCardVM> videoVM;
-            try
-            {
-                videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
-            Response.Headers.Append(AppConstants.HeaderTotalCount, videos.totalCount.ToString());
+            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
+
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.totalCount.ToString());
             return Ok(videoVM);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetDetail(string slug)
         {
-            if (string.IsNullOrEmpty(slug))
-            {
-                return BadRequest();
-            }
+            if (string.IsNullOrEmpty(slug.Trim()))
+                return BadRequest(ModelState);
 
-            var responseFindVideo = await _videoService.FindBySlug(slug);
+            var videoDTO = await _videoService.FindBySlugAsync(slug);
 
-            if (responseFindVideo.Status == ServiceResponseStatus.Failure)
-            {
-                return StatusCode(500);
-            }
-            else if (responseFindVideo.Status == ServiceResponseStatus.Warning)
-            {
-                return NotFound();
-            }
-
-            var videoDTO = responseFindVideo.Response;
-            VideoVM video;
-
-            try
-            {
-                video = _mapper.Map<VideoVM>(videoDTO);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
-
-            return Ok(video);
+            return Ok(_mapper.Map<VideoVM>(videoDTO));
         }
 
         [HttpGet]
@@ -101,18 +67,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> GetThumbnail(string slug)
         {
-            var responseGetBySlug = await _videoService.FindBySlug(slug);
-
-            if (responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
-            {
-                return StatusCode(500);
-            }
-            else if (responseGetBySlug.Status == ServiceResponseStatus.Warning)
-            {
-                return NotFound();
-            }
-
-            var video = responseGetBySlug.Response;
+            var video = await _videoService.FindBySlugAsync(slug);
 
             var path = AppContext.BaseDirectory;
 
@@ -130,60 +85,26 @@ namespace Web.Controllers
         [HttpPatch]
         public async Task<IActionResult> UpdateVideo([FromForm] VideoRequestVM video)
         {
-            // Checking
-            if (!video.CategoryId.HasValue && string.IsNullOrEmpty(video.CategoryName))
-            {
-                return BadRequest();
-            }
+            if(!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
-            if (video.Thumbnail is null && video.Img is null)
-            {
-                return BadRequest();
-            }
+            VideoDTO videoDTO = _mapper.Map<VideoDTO>(video);
 
-            VideoDTO videoDTO;
-            try
-            {
-                videoDTO = _mapper.Map<VideoDTO>(video);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
-
-            ServiceResponse<CategoryDTO> responseCategory;
+            CategoryDTO category;
             if (video.CategoryId.HasValue)
             {
-                responseCategory = await _categoryService.GetByIdAsync(video.CategoryId.Value);
+                category = await _categoryService.GetByIdAsync(video.CategoryId.Value);
             }
             else
             {
-                responseCategory = await _categoryService.GetByNameAsync(video.CategoryName);
+                category = await _categoryService.GetByNameAsync(video.CategoryName);
             }
 
-            if (responseCategory.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            videoDTO.Category = responseCategory.Response;
+            videoDTO.Category = category;
 
-            var responseUpdateVideo = await _videoService.UpdateVideo(videoDTO);
-            if (responseUpdateVideo == null && responseUpdateVideo.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            var videoUpdated = responseUpdateVideo.Response;
-            VideoVM videoReturned;
-            try
-            {
-                videoReturned = _mapper.Map<VideoVM>(videoUpdated);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
+            var videoUpdated = await _videoService.UpdateVideoAsync(videoDTO);
 
-            return Ok(videoReturned);
+            return Ok(_mapper.Map<VideoVM>(videoDTO));
         }
 
         [HttpGet]
@@ -191,32 +112,14 @@ namespace Web.Controllers
         {
             if (pageIndex < 0 || pageSize < 1 || string.IsNullOrEmpty(slug))
                 return BadRequest();
-            var responseVideo = await _videoService.FindBySlug(slug);
 
-            if (responseVideo == null || responseVideo.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            var videoReference = responseVideo.Response;
+            var videoReference = await _videoService.FindBySlugAsync(slug);
 
-            var responseRecommendation = await _videoService.SearchRecommendations(pageIndex, pageSize, videoReference);
-            if(responseRecommendation == null || responseRecommendation.Status != ServiceResponseStatus.Success)
-            {
-                return StatusCode(500);
-            }
-            var recommendation = responseRecommendation.Response;
+            var recommendation = await _videoService.SearchRecommendationsAsync(pageIndex, pageSize, videoReference);
 
-            IEnumerable<VideoCardVM> videosCards;
-            try
-            {
-                videosCards = _mapper.Map<IEnumerable<VideoCardVM>>(recommendation.videos);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500);
-            }
+            IEnumerable<VideoCardVM> videosCards = _mapper.Map<IEnumerable<VideoCardVM>>(recommendation.videos);
 
-            Response.Headers.Append(AppConstants.HeaderTotalCount, recommendation.totalCount.ToString());
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, recommendation.totalCount.ToString());
 
             return Ok(videosCards);
         }
@@ -224,18 +127,8 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> GetVideo(string slug)
         {
-            var responseGetBySlug = await _videoService.FindBySlug(slug);
+            var videoFile = await _videoService.FindBySlugAsync(slug);
 
-            if (responseGetBySlug == null || responseGetBySlug.Status == ServiceResponseStatus.Failure)
-            {
-                return StatusCode(500);
-            }
-            else if (responseGetBySlug.Status == ServiceResponseStatus.Warning)
-            {
-                return NotFound();
-            }
-
-            var videoFile = responseGetBySlug.Response;
             var path = AppContext.BaseDirectory;
             var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Path}");
 
