@@ -47,7 +47,6 @@ namespace Infrastructure.Data.Repositories
                         CommonTagCount = v.Tags.Count(t => referenceTagIds.Contains(t.Id)),
                         SameCategory = v.CategoryId == referenceCategoryId
                     })
-                    .Where(x => x.CommonTagCount > 0 || x.SameCategory) 
                     .Select(x => new
                     {
                         x.Video,
@@ -66,5 +65,7 @@ namespace Infrastructure.Data.Repositories
 
             return (videos, total);
         }
+
+
     }
 }
