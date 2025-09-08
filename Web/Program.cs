@@ -3,6 +3,7 @@ using Application.Services;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.Constants;
+using Web.Middewares;
 using Xabe.FFmpeg;
 
 namespace meltix_web
@@ -78,6 +79,7 @@ namespace meltix_web
                 .AllowCredentials()
             );
 
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseHttpsRedirection();
 
             app.UseAuthorization();

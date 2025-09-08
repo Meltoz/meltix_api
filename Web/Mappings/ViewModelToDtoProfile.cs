@@ -9,6 +9,7 @@ namespace Web.Mappings
         public ViewModelToDtoProfile()
         {
             CreateMap<VideoRequestVM, VideoDTO>();
+            CreateMap<CategoryVM, CategoryDTO>();
         }
     }
 }

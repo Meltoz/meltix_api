@@ -237,7 +237,7 @@ namespace Web.Controllers
 
             var videoFile = responseGetBySlug.Response;
             var path = AppContext.BaseDirectory;
-            var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Title}");
+            var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Path}");
 
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return File(fileStream, "video/mp4", enableRangeProcessing: true);
