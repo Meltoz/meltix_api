@@ -66,6 +66,11 @@ namespace Infrastructure.Data.Repositories
             return (videos, total);
         }
 
+        public async Task InsertRangeAsync(Video[] batch)
+        {
+            await _dbSet.AddRangeAsync(batch);
+        }
+
 
     }
 }

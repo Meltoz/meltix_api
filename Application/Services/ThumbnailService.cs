@@ -13,8 +13,8 @@ namespace Application.Services
 
         public async Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, CancellationToken cancellationToken = default)
         {
-            string input = Path.GetFullPath(videoPath).Replace("\\", "/");
-            string output = Path.GetFullPath(outputPath).Replace("\\", "/");
+            string input = $"\"{Path.GetFullPath(videoPath).Replace("\\", "/")}\"";
+            string output = $"\"{Path.GetFullPath(outputPath).Replace("\\", "/")}\"";
 
             var args = new List<string>
             {
@@ -32,7 +32,7 @@ namespace Application.Services
 
             if (exitCode != 0)
             {
-                throw new Exception($"FFmep failed with exit code {exitCode}");
+                throw new Exception($"FFmep failed with exit code {exitCode}, arguments: {t}");
             }
 
             return outputPath;

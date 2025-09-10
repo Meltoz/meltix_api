@@ -3,9 +3,7 @@ using Application.Services;
 using Infrastructure.Data;
 using meltix_web.Constantes;
 using Microsoft.EntityFrameworkCore;
-using Shared.Constants;
 using Web.Middewares;
-using Xabe.FFmpeg;
 
 namespace meltix_web
 {

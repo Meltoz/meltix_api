@@ -1,9 +1,7 @@
-﻿
-using Application.DTOs;
+﻿using Application.DTOs;
 using Application.Interfaces;
 using System.Globalization;
 using System.Text.Json;
-using Xabe.FFmpeg;
 
 namespace Application.Services
 {
@@ -17,7 +15,7 @@ namespace Application.Services
 
         public async Task<MediaInfoDTO> GetMediaInfoAsync(string videoPath, CancellationToken cancellationToken = default)
         {
-            string input = Path.GetFullPath(videoPath).Replace("\\", "/");
+            string input = $"\"{Path.GetFullPath(videoPath).Replace("\\", "/")}\"";
             var args = new List<string>
             {
                 "-v", "quiet",

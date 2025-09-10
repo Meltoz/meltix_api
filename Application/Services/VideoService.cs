@@ -5,8 +5,9 @@ using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Shared.Exceptions;
-using Xabe.FFmpeg;
-using Xabe.FFmpeg.Downloader;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading.Channels;
 
 namespace Application.Services
 {
@@ -86,25 +87,67 @@ namespace Application.Services
                 }
             }
 
-            // 2. Ajouter les fichiers du disque qui ne sont pas en BDD
+            await _videoRepo.SaveAsync();
+
             var dbFileNames = filesInDb.Select(f => f.Path).ToHashSet();
 
             var filesToAdd = filesOnDisk.Where(f => !dbFileNames.Contains(f)).ToList();
 
-            foreach (var file in filesToAdd)
+            if (!filesToAdd.Any())
+                return;
+
+            const int batchSize = 20;
+            const int maxParallelism = 10;
+
+            var channel = Channel.CreateUnbounded<Video>(new UnboundedChannelOptions
+            {
+                SingleWriter = false,
+                SingleReader = true
+            });
+
+            var consumer = Task.Run(async () =>
+            {
+                var batch = new List<Video>(batchSize);
+
+                await foreach (var video in channel.Reader.ReadAllAsync())
+                {
+                    batch.Add(video);
+
+                    if (batch.Count >= batchSize)
+                    {
+                        await _videoRepo.InsertRangeAsync(batch.ToArray());
+                        await _videoRepo.SaveAsync();
+                        batch.Clear();
+                    }
+                }
+
+                if (batch.Count > 0)
+                {
+                    await _videoRepo.InsertRangeAsync(batch.ToArray());
+                    await _videoRepo.SaveAsync();
+                }
+            });
+
+            await Parallel.ForEachAsync(filesToAdd, new ParallelOptions
+            {
+                MaxDegreeOfParallelism = maxParallelism
+            }, async (file, ct) =>
             {
                 var inputPath = Path.Combine(_pathToWatch, file);
-                var endPath = $@"Data\Thumbnails\{file.Substring(0, file.Length - 4)}.jpg";
+                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(file)}.jpg";
                 var ouputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
-                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
                 var thumbnail = await _thumbnailService.GenerateThumbnailAsync(inputPath, ouputPath, cts.Token);
                 var mediaInfo = await _mediaInfoService.GetMediaInfoAsync(inputPath, cts.Token);
 
                 var video = new Video(file, thumbnail, mediaInfo.Duration);
-                await _videoRepo.InsertWithOutSave(video);
-            }
+                await channel.Writer.WriteAsync(video);
+            });
 
-            await _videoRepo.SaveAsync();
+            channel.Writer.Complete();
+
+            await consumer;
         }
 
         public async Task<VideoDTO> UpdateVideoAsync(VideoDTO videoDTO)
