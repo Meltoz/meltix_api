@@ -13,13 +13,17 @@ namespace Application.Services
     public class VideoService : IVideoService
     {
         private readonly VideoRepository _videoRepo;
+        private readonly IThumbnailService _thumbnailService;
+        private readonly IMediaInfoService _mediaInfoService;
         private readonly IMapper _mapper;
         private readonly string _pathToWatch = @"E:\ToDelete";
 
 
-        public VideoService(MeltixContext c, IMapper m)
+        public VideoService(MeltixContext c, IThumbnailService ts, IMediaInfoService ms, IMapper m)
         {
             _videoRepo = new VideoRepository(c);
+            _thumbnailService = ts;
+            _mediaInfoService = ms;
             _mapper = m;
         }
 
@@ -89,8 +93,14 @@ namespace Application.Services
 
             foreach (var file in filesToAdd)
             {
-                var videoInfo = await GetVideoInfo(file);
-                var video = new Video(file, videoInfo.ThumbnailPath, videoInfo.Duration);
+                var inputPath = Path.Combine(_pathToWatch, file);
+                var endPath = $@"Data\Thumbnails\{file.Substring(0, file.Length - 4)}.jpg";
+                var ouputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+                var thumbnail = await _thumbnailService.GenerateThumbnailAsync(inputPath, ouputPath, cts.Token);
+                var mediaInfo = await _mediaInfoService.GetMediaInfoAsync(inputPath, cts.Token);
+
+                var video = new Video(file, thumbnail, mediaInfo.Duration);
                 await _videoRepo.InsertWithOutSave(video);
             }
 
@@ -114,35 +124,5 @@ namespace Application.Services
 
             return _mapper.Map<VideoDTO>(video);
         }
-
-        private async Task<VideoInfoResult> GetVideoInfo(string videoPath)
-        {
-            var videoInfo = new VideoInfoResult();
-            await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
-            var pathInput = Path.Combine(_pathToWatch, videoPath);
-            var mediaInfo = await FFmpeg.GetMediaInfo(pathInput);
-            var baseDirectoryPath = AppContext.BaseDirectory;
-            var endPath = $@"Data\\Thumbnails\\{videoPath.Substring(0, videoPath.Length - 4)}.jpg";
-            var ouputPath = Path.Combine(baseDirectoryPath, @$"..", "..", "..", "..", endPath);
-            var videoStream = mediaInfo.VideoStreams.FirstOrDefault();
-
-            var conversion = FFmpeg.Conversions.New()
-                     .AddStream(videoStream)
-                    .SetSeek(TimeSpan.FromSeconds(1))
-                    .AddParameter("-vframes 1")
-                    .SetOutput(ouputPath)
-                    .Start();
-
-            videoInfo.Duration = (int)mediaInfo.Duration.TotalSeconds;
-            videoInfo.ThumbnailPath = endPath;
-            return videoInfo;
-        }
-    }
-
-    internal class VideoInfoResult
-    {
-        public string ThumbnailPath { get; set; }
-
-        public int Duration { get; set; }
     }
 }

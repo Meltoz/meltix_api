@@ -101,3 +101,4 @@ desktop.ini
 # Ressource Files
 # ==========================
 *.exe
+/Web/appsettings.development.json
