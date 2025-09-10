@@ -1,12 +1,8 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
-using Domain.Entities;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
-using Shared;
-using Shared.Constants;
-using System.IO;
 using Web.ViewModels;
 
 namespace Web.Controllers

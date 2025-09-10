@@ -20,6 +20,10 @@ namespace meltix_web
             // Add services to the container.
             services.AddScoped<IVideoService, VideoService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddSingleton<IFfMpegService, FfmpegService>();
+            services.AddTransient<IThumbnailService, ThumbnailService>();
+            services.AddTransient<IMediaInfoService, MediaInfoService>();
+            services.AddHostedService<FolderScanService>();
 
             services.AddControllers();
 
@@ -41,9 +45,7 @@ namespace meltix_web
             services.AddDbContext<MeltixContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}"));
 
-            services.AddHostedService<FolderScanService>();
 
-            FFmpeg.SetExecutablesPath(".");
 
             // App generation<
             var app = builder.Build();
