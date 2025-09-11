@@ -1,6 +1,4 @@
-﻿using Domain.Entities;
-
-namespace Application.DTOs
+﻿namespace Application.DTOs
 {
     public class VideoDTO
     {
@@ -18,7 +16,7 @@ namespace Application.DTOs
 
         public string Path { get; set; } = string.Empty;
 
-        public List<Tag> Tags { get; set; } = new List<Tag>();
+        public List<string> Tags { get; set; } = new List<string>();
 
         public CategoryDTO Category { get; set; }
         

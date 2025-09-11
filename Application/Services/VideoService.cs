@@ -5,8 +5,6 @@ using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Shared.Exceptions;
-using System.Collections.Concurrent;
-using System.Linq;
 using System.Threading.Channels;
 
 namespace Application.Services
@@ -16,6 +14,7 @@ namespace Application.Services
         private readonly VideoRepository _videoRepo;
         private readonly IThumbnailService _thumbnailService;
         private readonly IMediaInfoService _mediaInfoService;
+        private readonly TagRepository _tagRepository;
         private readonly IMapper _mapper;
         private readonly string _pathToWatch = @"E:\ToDelete";
 
@@ -25,6 +24,7 @@ namespace Application.Services
             _videoRepo = new VideoRepository(c);
             _thumbnailService = ts;
             _mediaInfoService = ms;
+            _tagRepository = new TagRepository(c);
             _mapper = m;
         }
 
@@ -161,6 +161,25 @@ namespace Application.Services
                 videoEntity.ChangeTitle(videoDTO.Title);
             }
 
+            var dtoTags = new HashSet<string>(videoDTO.Tags);                
+            var entityTags = new HashSet<string>(videoEntity.Tags.Select(t => t.Value));
+
+            var tagsToAdd = dtoTags.Except(entityTags);
+
+            var tagsToRemove = entityTags.Except(dtoTags);
+
+            foreach (var tagValue in tagsToAdd)
+            {
+                var tagFind= await _tagRepository.GetByNameAsync(tagValue);
+                var t = tagFind != null ? tagFind : new Tag(tagValue);
+
+                videoEntity.AddTags(t);
+            }
+            foreach (var tagValue in tagsToRemove)
+            {
+                var tag = videoEntity.Tags.First(t => t.Value == tagValue);
+                videoEntity.RemoveTags(tag);
+            }
             videoEntity.Description = videoDTO.Description;
             videoEntity.CategoryId = videoDTO.Category.Id;
             var video = await _videoRepo.UpdateAsync(videoEntity);
