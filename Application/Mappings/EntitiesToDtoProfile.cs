@@ -8,7 +8,9 @@ namespace Application.Mappings
     {
         public EntitiesToDtoProfile()
         {
-            CreateMap<Video, VideoDTO>();
+            CreateMap<Video, VideoDTO>()
+                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Value)));
+
             CreateMap<Category, CategoryDTO>();
         }
     }

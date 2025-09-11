@@ -21,8 +21,11 @@ namespace Infrastructure.Data.Repositories
         {
             var searchLower = search.ToLower();
 
-            var query = _dbSet.Include(x => x.Category)
-                .Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower));
+            var query = _dbSet
+                .Include(v => v.Tags)
+                .Include(x => x.Category)
+                .Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower) 
+                || v.Tags.Select(x =>x.Value).Any(x => x.Contains(searchLower)));
 
             var videos = await query.Skip(skip).Take(take).ToListAsync();
             var totalCount = await query.CountAsync();
@@ -32,7 +35,7 @@ namespace Infrastructure.Data.Repositories
 
         public async Task<(IEnumerable<Video> videos, int totalCount)> GetRecommendation(int skip, int take, Video reference)
         {
-            var referenceTagIds = reference.Tags.Select(t => t.Id).ToList();
+            var referenceTagIds = reference.Tags.Select(t => t.Value).ToList();
             var referenceCategoryId = reference.CategoryId;
             int categoryWeight = 5;
             int tagsWeight = 8;
@@ -44,7 +47,7 @@ namespace Infrastructure.Data.Repositories
                     .Select(v => new
                     {
                         Video = v,
-                        CommonTagCount = v.Tags.Count(t => referenceTagIds.Contains(t.Id)),
+                        CommonTagCount = v.Tags.Count(t => referenceTagIds.Contains(t.Value)),
                         SameCategory = v.CategoryId == referenceCategoryId
                     })
                     .Select(x => new
@@ -69,6 +72,13 @@ namespace Infrastructure.Data.Repositories
         public async Task InsertRangeAsync(Video[] batch)
         {
             await _dbSet.AddRangeAsync(batch);
+        }
+
+        public override async Task<Video?> GetByIdAsync(Guid id)
+        {
+            return await _dbSet
+                .Include(v => v.Tags)
+                .Include(v => v.Category).SingleOrDefaultAsync(v => v.Id == id);
         }
 
 

@@ -11,7 +11,6 @@ namespace Web.Mappings
         {
 
             CreateMap<VideoDTO, VideoVM>()
-                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(x => x.Value)))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ApiConstantes.NoCategory));
 
             CreateMap<CategoryDTO, CategoryVM>();
