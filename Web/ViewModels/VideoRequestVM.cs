@@ -19,7 +19,7 @@ namespace Web.ViewModels
         public Guid? CategoryId { get; set; }
         public string? Category { get; set; }
 
-        public string Tags { get; set; }
+        public string? Tags { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

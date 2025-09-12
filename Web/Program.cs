@@ -18,6 +18,7 @@ namespace meltix_web
             // Add services to the container.
             services.AddScoped<IVideoService, VideoService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<ITagService, TagService>();
             services.AddSingleton<IFfMpegService, FfmpegService>();
             services.AddTransient<IThumbnailService, ThumbnailService>();
             services.AddTransient<IMediaInfoService, MediaInfoService>();
