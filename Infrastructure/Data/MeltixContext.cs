@@ -37,7 +37,8 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Video>()
                 .HasOne(v => v.Category)
                 .WithMany(c => c.Videos)
-                .HasForeignKey(v => v.CategoryId);
+                .HasForeignKey(v => v.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Tag>(t => t.HasIndex(t2 => t2.Value).IsUnique());
 
