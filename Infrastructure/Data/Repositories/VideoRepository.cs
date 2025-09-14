@@ -25,7 +25,8 @@ namespace Infrastructure.Data.Repositories
                 .Include(v => v.Tags)
                 .Include(x => x.Category)
                 .Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower) 
-                || v.Tags.Select(x =>x.Value).Any(x => x.Contains(searchLower)));
+                || v.Tags.Select(x =>x.Value).Any(x => x.Contains(searchLower))
+                || (v.Category != null && v.Category.Name.ToLower().Contains(searchLower)));
 
             var videos = await query.Skip(skip).Take(take).ToListAsync();
             var totalCount = await query.CountAsync();

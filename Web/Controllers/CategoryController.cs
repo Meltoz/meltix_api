@@ -46,13 +46,12 @@ namespace Web.Controllers
 
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryVM category)
+        public async Task<IActionResult> UpdateCategory([FromBody] CategoryVM category)
         {
             if (!ModelState.IsValid) 
                 return BadRequest(ModelState);
 
             var dto = _mapper.Map<CategoryDTO>(category);
-            dto.Id = id;
 
             var updatedCategory = await _categoryService.UpdateCategoryAsync(dto);
 
