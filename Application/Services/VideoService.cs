@@ -4,6 +4,7 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
+using Shared.Enums;
 using Shared.Exceptions;
 using System.Threading.Channels;
 
@@ -37,9 +38,8 @@ namespace Application.Services
             return _mapper.Map<VideoDTO>(video);
         }
 
-        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search)
+        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All)
         {
-
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
             var r = await _videoRepo.Search(skip, pageSize, search);
@@ -48,7 +48,6 @@ namespace Application.Services
                 _mapper.Map<IEnumerable<VideoDTO>>(r.videos),
                 r.totalCount);
         }
-
         public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference)
         {
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;

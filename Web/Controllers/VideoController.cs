@@ -36,6 +36,21 @@ namespace Web.Controllers
             return Ok(videoVM);
         }
 
+        // ici on va pouvoir mettre un authorize sur la methode
+        [HttpGet]
+        public async Task<IActionResult> GetUnCategorisedVideos(int pageIndex, int pageSize, string? search)
+        {
+            if (pageIndex < 0 || pageSize < 1)
+                return BadRequest();
+
+            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", Shared.Enums.SearchScopeVideo.Uncategorised);
+
+            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
+
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.totalCount.ToString());
+            return Ok(videoVM);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetDetail(string slug)
         {
@@ -60,23 +75,7 @@ namespace Web.Controllers
         /// </summary>
         /// <param name="slug"></param>
         /// <returns></returns>
-        [HttpGet]
-        public async Task<IActionResult> GetThumbnail(string slug)
-        {
-            var video = await _videoService.FindBySlugAsync(slug);
 
-            var path = AppContext.BaseDirectory;
-
-            var filePath = Path.Combine(path, "..", "..", "..", "..", video.Thumbnail);
-
-            if (!System.IO.File.Exists(filePath))
-                return NotFound();
-
-
-            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            var contentType = GetContentType(filePath);
-            return File(bytes, contentType);
-        }
 
         [HttpPatch]
         public async Task<IActionResult> UpdateVideo([FromForm] VideoRequestVM video)
@@ -118,6 +117,24 @@ namespace Web.Controllers
             Response.Headers.Append(ApiConstantes.HeaderTotalCount, recommendation.totalCount.ToString());
 
             return Ok(videosCards);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetThumbnail(string slug)
+        {
+            var video = await _videoService.FindBySlugAsync(slug);
+
+            var path = AppContext.BaseDirectory;
+
+            var filePath = Path.Combine(path, "..", "..", "..", "..", video.Thumbnail);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var contentType = GetContentType(filePath);
+            return File(bytes, contentType);
         }
 
         [HttpGet]
