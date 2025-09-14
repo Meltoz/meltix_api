@@ -57,5 +57,13 @@ namespace Web.Controllers
 
             return Ok(_mapper.Map<CategoryVM>(updatedCategory));
         }
+
+        [HttpDelete]
+        public IActionResult DeleteCategory(Guid id)
+        {
+            _categoryService.DeleteCategory(id);
+
+            return Ok();
+        }
     }
 }
