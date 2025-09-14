@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Enums;
 
 namespace Infrastructure.Data.Repositories
 {
@@ -17,16 +18,46 @@ namespace Infrastructure.Data.Repositories
                 .Where(v => v.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search)
+        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All)
         {
             var searchLower = search.ToLower();
 
             var query = _dbSet
+                .Include(v => v.Category)
                 .Include(v => v.Tags)
-                .Include(x => x.Category)
-                .Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower) 
-                || v.Tags.Select(x =>x.Value).Any(x => x.Contains(searchLower))
-                || (v.Category != null && v.Category.Name.ToLower().Contains(searchLower)));
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+
+                switch (scope)
+                {
+                    case SearchScopeVideo.TitleDescription:
+                        query = query.Where(v => v.Title.ToLower() == searchLower ||
+                                                    v.Description.ToLower() == searchLower);
+
+                        break;
+                    case SearchScopeVideo.Category:
+                        query = query.Where(v => v.Category != null && v.Category.Name.ToLower() == searchLower);
+                        break;
+
+                    case SearchScopeVideo.Uncategorised:
+                        query = query.Where(v => v.Category == null);
+                        break;
+
+                    case SearchScopeVideo.Tags:
+                        query = query.Where(v => v.Tags.Any(t => t.Value.ToLower().Contains(searchLower)));
+                        break;
+
+                    case SearchScopeVideo.All:
+                    default:
+                        query = query.Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower)
+                                        || v.Tags.Select(x => x.Value).Any(x => x.Contains(searchLower))
+                                        || (v.Category != null && v.Category.Name.ToLower().Contains(searchLower)));
+                        break;
+                }
+            }
+            query = query.OrderBy(v => v.Updated);
 
             var videos = await query.Skip(skip).Take(take).ToListAsync();
             var totalCount = await query.CountAsync();
@@ -54,7 +85,7 @@ namespace Infrastructure.Data.Repositories
                     .Select(x => new
                     {
                         x.Video,
-                        Score = (x.CommonTagCount * tagsWeight) + (x.SameCategory ? categoryWeight : 0) 
+                        Score = (x.CommonTagCount * tagsWeight) + (x.SameCategory ? categoryWeight : 0)
                     })
                     .OrderByDescending(x => x.Score);
 
@@ -62,7 +93,7 @@ namespace Infrastructure.Data.Repositories
 
             var total = await query.CountAsync();
             var videos = await query
-                .Select(x=> x.Video)
+                .Select(x => x.Video)
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();

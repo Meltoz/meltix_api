@@ -27,8 +27,6 @@ namespace Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-     
-
             modelBuilder.Entity<Video>()
                 .HasMany(v => v.Tags)
                 .WithMany(c => c.Videos)
@@ -40,7 +38,8 @@ namespace Infrastructure.Data
                 .HasForeignKey(v => v.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            modelBuilder.Entity<Tag>(t => t.HasIndex(t2 => t2.Value).IsUnique());
+            modelBuilder.Entity<Tag>(t => t.HasIndex(t2 => t2.Value)
+            .IsUnique());
 
             base.OnModelCreating(modelBuilder);
         }
