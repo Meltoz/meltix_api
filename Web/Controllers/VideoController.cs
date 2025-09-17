@@ -31,9 +31,9 @@ namespace Web.Controllers
 
             var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "");
 
-            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
+            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.Data);
 
-            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.totalCount.ToString());
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.TotalCount.ToString());
             return Ok(videoVM);
         }
 
@@ -46,9 +46,9 @@ namespace Web.Controllers
 
             var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", SearchScopeVideo.Uncategorised);
 
-            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
+            IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.Data);
 
-            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.totalCount.ToString());
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, videos.TotalCount.ToString());
             return Ok(videoVM);
         }
 
@@ -107,11 +107,26 @@ namespace Web.Controllers
 
             var recommendation = await _videoService.SearchRecommendationsAsync(pageIndex, pageSize, videoReference);
 
-            IEnumerable<VideoCardVM> videosCards = _mapper.Map<IEnumerable<VideoCardVM>>(recommendation.videos);
+            IEnumerable<VideoCardVM> videosCards = _mapper.Map<IEnumerable<VideoCardVM>>(recommendation.Data);
 
-            Response.Headers.Append(ApiConstantes.HeaderTotalCount, recommendation.totalCount.ToString());
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, recommendation.TotalCount.ToString());
 
             return Ok(videosCards);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LatestVideos(int pageIndex, int pageSize, int days)
+        {
+            if (pageIndex < 0 || pageSize < 1 || days < 1)
+                return BadRequest();
+
+            var pagedVideos = await _videoService.GetLastestVideos(pageIndex, pageSize, days);
+
+            var videos = _mapper.Map<IEnumerable<VideoCardVM>>(pagedVideos.Data);
+
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, pagedVideos.TotalCount.ToString());
+
+            return Ok(videos);
         }
 
         [HttpGet]
@@ -135,7 +150,6 @@ namespace Web.Controllers
         {
             var videoFile = await _videoService.FindBySlugAsync(slug);
 
-            var path = AppContext.BaseDirectory;
             var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Path}");
 
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

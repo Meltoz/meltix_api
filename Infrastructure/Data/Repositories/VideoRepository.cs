@@ -18,16 +18,15 @@ namespace Infrastructure.Data.Repositories
                 .Where(v => v.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All, bool onlyWithCategory = true)
+        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All)
         {
-            var searchLower = search.ToLower();
-
             var query = _dbSet
+                .AsNoTracking()
                 .Include(v => v.Category)
                 .Include(v => v.Tags)
                 .AsQueryable();
 
-            if (onlyWithCategory && scope != SearchScopeVideo.Uncategorised)
+            if (scope != SearchScopeVideo.Uncategorised)
             {
                 query = query.Where(v => v.Category != null);
             }
@@ -35,35 +34,34 @@ namespace Infrastructure.Data.Repositories
             switch (scope)
             {
                 case SearchScopeVideo.TitleDescription:
-                    query = query.Where(v => v.Title.ToLower() == searchLower ||
-                                                v.Description.ToLower() == searchLower);
+                    query = query.Where(v => EF.Functions.Like(v.Title, search) ||
+                                                  EF.Functions.Like(v.Description, search));
 
                     break;
                 case SearchScopeVideo.Category:
-                    query = query.Where(v => v.Category != null && v.Category.Name.ToLower() == searchLower);
+                    query = query.Where(v => EF.Functions.Like(v.Category.Name, search));
                     break;
 
                 case SearchScopeVideo.Uncategorised:
-                    query = query.Where(v => v.Category == null).Where(v => v.Title.ToLower().Contains(searchLower));
+                    query = query.Where(v => v.Category == null && EF.Functions.Like(v.Title, $"%{search}%"));
                     break;
 
                 case SearchScopeVideo.Tags:
-                    query = query.Where(v => v.Tags.Any(t => t.Value.ToLower().Contains(searchLower)));
+                    query = query.Where(v => v.Tags.Any(t => EF.Functions.Like(t.Value, $"%{search}%")));
                     break;
 
                 case SearchScopeVideo.All:
                 default:
-                    query = query.Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower)
-                                    || v.Tags.Select(x => x.Value).Any(x => x.Contains(searchLower))
-                                    || v.Category.Name.ToLower().Contains(searchLower));
+                    query = query.Where(v =>
+                                            EF.Functions.Like(v.Title, $"%{search}%") ||
+                                            EF.Functions.Like(v.Description, $"%{search}%") ||
+                                            v.Tags.Any(x => EF.Functions.Like(x.Value, $"%{search}%")) ||
+                                            EF.Functions.Like(v.Category.Name, $"%{search}%"));
                     break;
             }
             query = query.OrderBy(v => v.Updated);
 
-            var videos = await query.Skip(skip).Take(take).ToListAsync();
-            var totalCount = await query.CountAsync();
-
-            return (videos, totalCount);
+            return await PaginateAsync<Video>(query, skip, take);
         }
 
         public async Task<(IEnumerable<Video> videos, int totalCount)> GetRecommendation(int skip, int take, Video reference)
@@ -91,18 +89,20 @@ namespace Infrastructure.Data.Repositories
                     })
                     .OrderByDescending(x => x.Score);
 
-            var t = await query.Skip(0).Take(10).ToListAsync();
-
-            var total = await query.CountAsync();
-            var videos = await query
-                .Select(x => x.Video)
-                .Skip(skip)
-                .Take(take)
-                .ToListAsync();
-
-            return (videos, total);
+            return await PaginateAsync<Video>(query.Select(x => x.Video), skip, take);
         }
 
+        public async Task<(IEnumerable<Video> videos, int totalCount)> GetLatest(int skip, int take, int days)
+        {
+            var date = DateTime.UtcNow.AddDays(days * -1);
+            var query = _dbSet.Include(v => v.Category)
+                .Where(v => v.Category != null)
+                .Where(v => v.Updated > date)
+                .OrderByDescending(v => v.Updated);
+
+            return await PaginateAsync<Video>(query, skip, take);
+
+        }
         public async Task InsertRangeAsync(Video[] batch)
         {
             await _dbSet.AddRangeAsync(batch);
@@ -114,7 +114,5 @@ namespace Infrastructure.Data.Repositories
                 .Include(v => v.Tags)
                 .Include(v => v.Category).SingleOrDefaultAsync(v => v.Id == id);
         }
-
-
     }
 }
