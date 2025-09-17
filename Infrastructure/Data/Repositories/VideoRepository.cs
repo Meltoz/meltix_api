@@ -18,7 +18,7 @@ namespace Infrastructure.Data.Repositories
                 .Where(v => v.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All)
+        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All, bool onlyWithCategory = true)
         {
             var searchLower = search.ToLower();
 
@@ -27,35 +27,36 @@ namespace Infrastructure.Data.Repositories
                 .Include(v => v.Tags)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(search))
+            if (onlyWithCategory && scope != SearchScopeVideo.Uncategorised)
             {
+                query = query.Where(v => v.Category != null);
+            }
 
-                switch (scope)
-                {
-                    case SearchScopeVideo.TitleDescription:
-                        query = query.Where(v => v.Title.ToLower() == searchLower ||
-                                                    v.Description.ToLower() == searchLower);
+            switch (scope)
+            {
+                case SearchScopeVideo.TitleDescription:
+                    query = query.Where(v => v.Title.ToLower() == searchLower ||
+                                                v.Description.ToLower() == searchLower);
 
-                        break;
-                    case SearchScopeVideo.Category:
-                        query = query.Where(v => v.Category != null && v.Category.Name.ToLower() == searchLower);
-                        break;
+                    break;
+                case SearchScopeVideo.Category:
+                    query = query.Where(v => v.Category != null && v.Category.Name.ToLower() == searchLower);
+                    break;
 
-                    case SearchScopeVideo.Uncategorised:
-                        query = query.Where(v => v.Category == null);
-                        break;
+                case SearchScopeVideo.Uncategorised:
+                    query = query.Where(v => v.Category == null).Where(v => v.Title.ToLower().Contains(searchLower));
+                    break;
 
-                    case SearchScopeVideo.Tags:
-                        query = query.Where(v => v.Tags.Any(t => t.Value.ToLower().Contains(searchLower)));
-                        break;
+                case SearchScopeVideo.Tags:
+                    query = query.Where(v => v.Tags.Any(t => t.Value.ToLower().Contains(searchLower)));
+                    break;
 
-                    case SearchScopeVideo.All:
-                    default:
-                        query = query.Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower)
-                                        || v.Tags.Select(x => x.Value).Any(x => x.Contains(searchLower))
-                                        || (v.Category != null && v.Category.Name.ToLower().Contains(searchLower)));
-                        break;
-                }
+                case SearchScopeVideo.All:
+                default:
+                    query = query.Where(v => v.Title.ToLower().Contains(searchLower) || v.Description.ToLower().Contains(searchLower)
+                                    || v.Tags.Select(x => x.Value).Any(x => x.Contains(searchLower))
+                                    || v.Category.Name.ToLower().Contains(searchLower));
+                    break;
             }
             query = query.OrderBy(v => v.Updated);
 
@@ -75,6 +76,7 @@ namespace Infrastructure.Data.Repositories
             var query = _dbSet
                     .Include(v => v.Category)
                     .Include(v => v.Tags)
+                    .Where(v => v.Category != null)
                     .Where(v => v.Id != reference.Id)
                     .Select(v => new
                     {
