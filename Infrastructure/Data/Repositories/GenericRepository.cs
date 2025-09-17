@@ -22,9 +22,8 @@ namespace Infrastructure.Data.Repositories
 
         public virtual async Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int skip, int take)
         {
-            return (
-                data: _dbSet.OrderBy(f => f.Created).Skip(skip).Take(take),
-                totalCount: await _dbSet.CountAsync());
+            var query = _dbSet.OrderBy(f => f.Created);
+            return await PaginateAsync<T>(query, skip, take);
         }
 
         public virtual async Task<T?> GetByIdAsync(Guid id) 
@@ -220,7 +219,12 @@ namespace Infrastructure.Data.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        protected virtual async Task<(IEnumerable<T> data, int totalCount)> PaginateAsync<T>(IQueryable<T> query, int skip, int take)
+        {
+            var total = await query.CountAsync();
+            var data = await query.Skip(skip).Take(take).ToListAsync();
+            return (data, total);
+        } 
     }
-
-
 }

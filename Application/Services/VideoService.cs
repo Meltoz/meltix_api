@@ -4,6 +4,7 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
+using Shared;
 using Shared.Enums;
 using Shared.Exceptions;
 using System.Threading.Channels;
@@ -38,19 +39,36 @@ namespace Application.Services
             return _mapper.Map<VideoDTO>(video);
         }
 
-        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All, bool onlyWithCategory = true)
+        public async Task<PagedResult<VideoDTO>> GetLastestVideos(int pageIndex, int pageSize, int days)
         {
-            var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
+            var skip = SkipCalculator.Calculate(pageIndex, pageSize);
 
-            var r = await _videoRepo.Search(skip, pageSize, search, scope, onlyWithCategory);
+            var lastestVideos = await _videoRepo.GetLatest(skip, pageSize, days);
 
-            return (
-                _mapper.Map<IEnumerable<VideoDTO>>(r.videos),
-                r.totalCount);
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(lastestVideos.videos);
+            return new PagedResult<VideoDTO> { 
+                Data = videos, 
+                TotalCount = lastestVideos.totalCount 
+            };
         }
-        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference)
+
+        public async Task<PagedResult<VideoDTO>> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All)
         {
-            var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
+            var skip = SkipCalculator.Calculate(pageIndex, pageSize);
+
+            var r = await _videoRepo.Search(skip, pageSize, search, scope);
+
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.videos);
+            return new PagedResult<VideoDTO> {
+                Data= videos,
+                TotalCount = r.totalCount
+            };
+        }
+
+
+        public async Task<PagedResult<VideoDTO>> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference)
+        {
+            var skip = SkipCalculator.Calculate(pageIndex, pageSize);
 
             var video = _mapper.Map<Video>(videoReference);
             video.Id = videoReference.Id;
@@ -58,7 +76,12 @@ namespace Application.Services
             var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
 
             var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
-            return (videos, data.totalCount);
+
+            return new PagedResult<VideoDTO>
+            {
+                Data = videos,
+                TotalCount = data.totalCount
+            };
         }
 
         public async Task SyncFolderWithDatabaseAsync()
