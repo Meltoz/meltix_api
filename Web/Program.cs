@@ -15,6 +15,8 @@ namespace meltix_web
             var services = builder.Services;
 
 
+            services.AddResponseCaching();
+
             // Add services to the container.
             services.AddScoped<IVideoService, VideoService>();
             services.AddScoped<ICategoryService, CategoryService>();

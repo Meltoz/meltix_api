@@ -38,11 +38,11 @@ namespace Application.Services
             return _mapper.Map<VideoDTO>(video);
         }
 
-        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All)
+        public async Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All, bool onlyWithCategory = true)
         {
             var skip = pageIndex < 0 ? 0 : pageIndex * pageSize;
 
-            var r = await _videoRepo.Search(skip, pageSize, search);
+            var r = await _videoRepo.Search(skip, pageSize, search, scope, onlyWithCategory);
 
             return (
                 _mapper.Map<IEnumerable<VideoDTO>>(r.videos),

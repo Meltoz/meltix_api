@@ -3,6 +3,7 @@ using Application.Interfaces;
 using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Enums;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -43,7 +44,7 @@ namespace Web.Controllers
             if (pageIndex < 0 || pageSize < 1)
                 return BadRequest();
 
-            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", Shared.Enums.SearchScopeVideo.Uncategorised);
+            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", SearchScopeVideo.Uncategorised);
 
             IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.videos);
 
@@ -69,12 +70,6 @@ namespace Web.Controllers
 
             return Ok();
         }
-
-        /// <summary>
-        /// Obtain thumbnail of video
-        /// </summary>
-        /// <param name="slug"></param>
-        /// <returns></returns>
 
 
         [HttpPatch]
@@ -131,10 +126,8 @@ namespace Web.Controllers
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
 
-
-            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
             var contentType = GetContentType(filePath);
-            return File(bytes, contentType);
+            return PhysicalFile(filePath, contentType);
         }
 
         [HttpGet]

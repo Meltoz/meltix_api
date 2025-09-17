@@ -8,7 +8,7 @@ namespace Application.Interfaces
     {
         public Task<VideoDTO> FindBySlugAsync(string slug);
 
-        public Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All);
+        public Task<(IEnumerable<VideoDTO> videos, int totalCount)> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All, bool onlyWithCategory = true);
 
 
         public Task<(IEnumerable<VideoDTO> videos, int totalCount)> SearchRecommendationsAsync(int pageIndex, int pageSize, VideoDTO videoReference);
