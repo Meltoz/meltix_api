@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers
@@ -15,11 +16,14 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Search(string searchTerm)
+        public async Task<IActionResult> Search(int pageIndex, int pageSize, string? searchTerm)
         {
-            var tags = await _tagService.Search(10, searchTerm.ToLower());
+           searchTerm = searchTerm ?? string.Empty;
 
-            return Ok(tags);
+            var tags = await _tagService.Search(pageIndex, pageSize, searchTerm.ToLower());
+
+            Response.Headers.Append(ApiConstantes.HeaderTotalCount, tags.TotalCount.ToString());
+            return Ok(tags.Data.Select(x => new {name= x.Item1, count= x.Item2}));
         }
      
     }
