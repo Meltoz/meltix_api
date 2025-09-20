@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
+using Shared;
 
 namespace Application.Services
 {
@@ -12,11 +13,17 @@ namespace Application.Services
         {
             _tagRepository = new TagRepository(ctx);
         }
-        public async Task<IEnumerable<string>> Search(int limit, string searchTerm)
+        public async Task<PagedResult<Tuple<string, int>>> Search(int pageIndex, int pageSize, string searchTerm)
         {
-            var tags =  await _tagRepository.Search(limit, searchTerm);
+            var skip = SkipCalculator.Calculate(pageIndex, pageSize);
 
-            return tags.Select(t => t.Value);
+            var tags =  await _tagRepository.Search(skip, pageSize, searchTerm);
+
+            return new PagedResult<Tuple<string, int>>
+            {
+                Data = tags.tags,
+                TotalCount = tags.totalCount,
+            };            
         }
     }
 }

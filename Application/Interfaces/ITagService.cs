@@ -1,7 +1,9 @@
-﻿namespace Application.Interfaces
+﻿using Shared;
+
+namespace Application.Interfaces
 {
     public interface ITagService
     {
-        public Task<IEnumerable<string>> Search(int limit, string searchTerm);
+        public Task<PagedResult<Tuple<string, int>>> Search(int pageIndex, int pageSize, string searchTerm);
     }
 }
