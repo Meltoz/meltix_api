@@ -3,7 +3,9 @@ using Application.Interfaces;
 using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
 using Shared.Enums;
+using System.Text.RegularExpressions;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -24,12 +26,15 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllVideos(int pageIndex, int pageSize, string? search)
+        public async Task<IActionResult> GetAllVideos(int pageIndex, int pageSize, string sort, string? search)
         {
             if (pageIndex < 0 || pageSize < 1)
                 return BadRequest();
 
-            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "");
+            if (!GetSorting(sort, out var sortOptions))
+                return BadRequest();
+
+            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", sortOptions);
 
             IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.Data);
 
@@ -39,12 +44,16 @@ namespace Web.Controllers
 
         // ici on va pouvoir mettre un authorize sur la methode
         [HttpGet]
-        public async Task<IActionResult> GetUnCategorisedVideos(int pageIndex, int pageSize, string? search)
+        public async Task<IActionResult> GetUnCategorisedVideos(int pageIndex, int pageSize, string sort, string? search)
         {
             if (pageIndex < 0 || pageSize < 1)
                 return BadRequest();
 
-            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", SearchScopeVideo.Uncategorised);
+            if (!GetSorting(sort, out var sortOptions))
+                return BadRequest();
+
+
+            var videos = await _videoService.PaginateAsync(pageIndex, pageSize, search ?? "", sortOptions, SearchScopeVideo.Uncategorised);
 
             IEnumerable<VideoCardVM> videoVM = _mapper.Map<IEnumerable<VideoCardVM>>(videos.Data);
 
@@ -115,21 +124,6 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> LatestVideos(int pageIndex, int pageSize, int days)
-        {
-            if (pageIndex < 0 || pageSize < 1 || days < 1)
-                return BadRequest();
-
-            var pagedVideos = await _videoService.GetLastestVideos(pageIndex, pageSize, days);
-
-            var videos = _mapper.Map<IEnumerable<VideoCardVM>>(pagedVideos.Data);
-
-            Response.Headers.Append(ApiConstantes.HeaderTotalCount, pagedVideos.TotalCount.ToString());
-
-            return Ok(videos);
-        }
-
-        [HttpGet]
         public async Task<IActionResult> GetThumbnail(string slug)
         {
             var video = await _videoService.FindBySlugAsync(slug);
@@ -167,6 +161,23 @@ namespace Web.Controllers
                 ".webp" => "image/webp",
                 _ => "application/octet-stream",
             };
+        }
+
+        private bool GetSorting(string sort, out SortOption<SortVideo> sortOption)
+        {
+            var patternSort = @"^(title|update)_(ascending|descending)$";
+            var regex = new Regex(patternSort);
+            var match = regex.Match(sort);
+            if (!match.Success)
+            {
+                sortOption = null;
+                return false;
+            }
+
+            var field = match.Groups[1].Value;
+            var direction = match.Groups[2].Value;
+            sortOption = SortOptionFactory.Create<SortVideo>(field, direction);
+            return true;
         }
     }
 }

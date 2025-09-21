@@ -1,6 +1,8 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared;
 using Shared.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Infrastructure.Data.Repositories
 {
@@ -18,7 +20,7 @@ namespace Infrastructure.Data.Repositories
                 .Where(v => v.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SearchScopeVideo scope = SearchScopeVideo.All)
+        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All)
         {
             var query = _dbSet
                 .AsNoTracking()
@@ -59,7 +61,8 @@ namespace Infrastructure.Data.Repositories
                                             EF.Functions.Like(v.Category.Name, $"%{search}%"));
                     break;
             }
-            query = query.OrderBy(v => v.Updated);
+            query = Sort(query, sortOption);
+
 
             return await PaginateAsync<Video>(query, skip, take);
         }
@@ -72,6 +75,7 @@ namespace Infrastructure.Data.Repositories
             int tagsWeight = 8;
 
             var query = _dbSet
+                    .AsNoTracking()
                     .Include(v => v.Category)
                     .Include(v => v.Tags)
                     .Where(v => v.Category != null)
@@ -92,17 +96,6 @@ namespace Infrastructure.Data.Repositories
             return await PaginateAsync<Video>(query.Select(x => x.Video), skip, take);
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> GetLatest(int skip, int take, int days)
-        {
-            var date = DateTime.UtcNow.AddDays(days * -1);
-            var query = _dbSet.Include(v => v.Category)
-                .Where(v => v.Category != null)
-                .Where(v => v.Updated > date)
-                .OrderByDescending(v => v.Updated);
-
-            return await PaginateAsync<Video>(query, skip, take);
-
-        }
         public async Task InsertRangeAsync(Video[] batch)
         {
             await _dbSet.AddRangeAsync(batch);
@@ -113,6 +106,26 @@ namespace Infrastructure.Data.Repositories
             return await _dbSet
                 .Include(v => v.Tags)
                 .Include(v => v.Category).SingleOrDefaultAsync(v => v.Id == id);
+        }
+
+        private IQueryable<Video> Sort( IQueryable<Video> query, SortOption<SortVideo> sortOption)
+        {
+            if (sortOption != null)
+            {
+                query = (sortOption.SortBy, sortOption.Direction) switch
+                {
+                    (SortVideo.Title, SortDirection.Ascending) => query.OrderBy(v => v.Title),
+                    (SortVideo.Title, SortDirection.Descending) => query.OrderByDescending(v => v.Title),
+                    (SortVideo.Update, SortDirection.Ascending) => query.OrderBy(v => v.Updated),
+                    (SortVideo.Update, SortDirection.Descending) => query.OrderByDescending(v => v.Updated),
+                    _ => query.OrderBy(v => v.Updated),
+                };
+            }
+            else
+            {
+                query = query.OrderBy(v => v.Updated);
+            }
+            return query;
         }
     }
 }

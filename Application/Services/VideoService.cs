@@ -39,24 +39,11 @@ namespace Application.Services
             return _mapper.Map<VideoDTO>(video);
         }
 
-        public async Task<PagedResult<VideoDTO>> GetLastestVideos(int pageIndex, int pageSize, int days)
+        public async Task<PagedResult<VideoDTO>> PaginateAsync(int pageIndex, int pageSize, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All)
         {
             var skip = SkipCalculator.Calculate(pageIndex, pageSize);
 
-            var lastestVideos = await _videoRepo.GetLatest(skip, pageSize, days);
-
-            var videos = _mapper.Map<IEnumerable<VideoDTO>>(lastestVideos.videos);
-            return new PagedResult<VideoDTO> { 
-                Data = videos, 
-                TotalCount = lastestVideos.totalCount 
-            };
-        }
-
-        public async Task<PagedResult<VideoDTO>> PaginateAsync(int pageIndex, int pageSize, string search, SearchScopeVideo scope = SearchScopeVideo.All)
-        {
-            var skip = SkipCalculator.Calculate(pageIndex, pageSize);
-
-            var r = await _videoRepo.Search(skip, pageSize, search, scope);
+            var r = await _videoRepo.Search(skip, pageSize, search, sortOption, scope);
 
             var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.videos);
             return new PagedResult<VideoDTO> {
