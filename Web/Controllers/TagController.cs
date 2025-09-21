@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces;
+using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
+using Web.ViewModels;
 
 namespace Web.Controllers
 {
@@ -9,10 +11,12 @@ namespace Web.Controllers
     public class TagController : ControllerBase
     {
         private readonly ITagService _tagService;
+        private readonly IMapper _mapper;
 
-        public TagController(ITagService ts): base()
+        public TagController(ITagService ts, IMapper m): base()
         {
             _tagService = ts;
+            _mapper = m;
         }
 
         [HttpGet]
@@ -23,8 +27,30 @@ namespace Web.Controllers
             var tags = await _tagService.Search(pageIndex, pageSize, searchTerm.ToLower());
 
             Response.Headers.Append(ApiConstantes.HeaderTotalCount, tags.TotalCount.ToString());
-            return Ok(tags.Data.Select(x => new {name= x.Item1, count= x.Item2}));
+
+            var tagsReturned = _mapper.Map<IEnumerable<TagVM>>(tags.Data);
+            return Ok(tagsReturned);
         }
-     
+
+        [HttpPatch]
+        public async Task<IActionResult> Edit(TagVM tag)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            var tagUpdate = await _tagService.Edit(tag.Id, tag.Name);
+
+            return Ok(_mapper.Map<TagVM>(tagUpdate));
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _tagService.DeleteTag(id);
+
+            return Ok();
+        }
     }
 }
