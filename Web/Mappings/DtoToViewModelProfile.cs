@@ -17,6 +17,9 @@ namespace Web.Mappings
 
             CreateMap<VideoDTO, VideoCardVM>()
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : ApiConstantes.NoCategory));
+
+            CreateMap<TagDTO, TagVM>();
+
         }
     }
 }

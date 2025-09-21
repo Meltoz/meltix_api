@@ -1,29 +1,65 @@
-﻿using Application.Interfaces;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using AutoMapper;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Shared;
+using Shared.Exceptions;
 
 namespace Application.Services
 {
     public class TagService : ITagService
     {
         private readonly TagRepository _tagRepository;
+        private readonly IMapper _mapper;
 
-        public TagService(MeltixContext ctx)
+        public TagService(MeltixContext ctx, IMapper m)
         {
             _tagRepository = new TagRepository(ctx);
+            _mapper = m;
         }
-        public async Task<PagedResult<Tuple<string, int>>> Search(int pageIndex, int pageSize, string searchTerm)
+
+        public async Task<PagedResult<TagDTO>> Search(int pageIndex, int pageSize, string searchTerm)
         {
             var skip = SkipCalculator.Calculate(pageIndex, pageSize);
 
             var tags =  await _tagRepository.Search(skip, pageSize, searchTerm);
 
-            return new PagedResult<Tuple<string, int>>
+            var tagsDto = _mapper.Map<IEnumerable<TagDTO>>(tags.tags);
+
+            return new PagedResult<TagDTO>
             {
-                Data = tags.tags,
-                TotalCount = tags.totalCount,
+                Data = tagsDto,
+                TotalCount = tags.totalCount
             };            
         }
+        public async Task<TagDTO> Edit(Guid id, string value)
+        {
+            var tagToUpdate = await _tagRepository.GetByIdAsync(id);
+
+            if (tagToUpdate is null)
+                throw new EntityNotFoundException($"Impossible to find tag with id = '{id}'");
+
+            tagToUpdate.ChangeValue(value);
+
+            var tagUpdated = await _tagRepository.UpdateAsync(tagToUpdate);
+
+            return _mapper.Map<TagDTO>(tagUpdated);
+
+        }
+
+        public async Task<bool> DeleteTag(Guid id)
+        {
+            var tag = await _tagRepository.GetByIdAsync(id);
+
+            if(tag is null)
+                throw new EntityNotFoundException($"Impossible to find tag with id = '{id}'");
+
+            _tagRepository.Delete(id);
+
+            return true;
+        }
+
+
     }
 }

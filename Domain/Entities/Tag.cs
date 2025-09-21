@@ -14,6 +14,11 @@
                 Value = value.ToLower(); 
         }
 
+        public void ChangeValue(string value)
+        {
+            if(IsValidTag(value))
+                Value = value.ToLower();
+        }
         
         public int CompareTo(Tag? other)
         {
