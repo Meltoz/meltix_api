@@ -23,9 +23,12 @@ namespace Web.Controllers
             _mapper = m;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? name)
+        public async Task<IActionResult> GetAll(int pageIndex, int pageSize, string? name)
         {
-            var categoriesDtos = await _categoryService.SearchAsync(0, 20, name ?? "");
+            if (pageIndex < 0 || pageSize < 1)
+                return BadRequest();
+
+            var categoriesDtos = await _categoryService.SearchAsync(pageIndex, pageSize, name ?? "");
 
             var categories = _mapper.Map<IEnumerable<CategoryVM>>(categoriesDtos.categories);
 
