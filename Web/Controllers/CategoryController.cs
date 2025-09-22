@@ -3,8 +3,6 @@ using Application.Interfaces;
 using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Shared;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -48,7 +46,7 @@ namespace Web.Controllers
         }
 
 
-        [HttpPatch("{id}")]
+        [HttpPatch]
         public async Task<IActionResult> UpdateCategory([FromBody] CategoryVM category)
         {
             if (!ModelState.IsValid) 
