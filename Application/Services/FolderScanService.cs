@@ -6,12 +6,12 @@ namespace Application.Services
 {
     public class FolderScanService : BackgroundService
     {
-        private readonly IVideoService _videoService;
+        private readonly VideoService _videoService;
 
         public FolderScanService(IServiceScopeFactory sf)
         {
             var scope = sf.CreateScope();
-            _videoService = scope.ServiceProvider.GetService<IVideoService>();
+            _videoService = scope.ServiceProvider.GetService<VideoService>();
 
 
         }

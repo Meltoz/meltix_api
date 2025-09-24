@@ -1,11 +1,13 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 using Shared.Enums;
 using System.Text.RegularExpressions;
+using Web.Constantes;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -14,11 +16,11 @@ namespace Web.Controllers
     [Route("/api/[controller]/[action]")]
     public class VideoController : ControllerBase
     {
-        private readonly IVideoService _videoService;
-        private readonly ICategoryService _categoryService;
+        private readonly VideoService _videoService;
+        private readonly CategoryService _categoryService;
         private readonly IMapper _mapper;
 
-        public VideoController(IVideoService vs, ICategoryService cs, IMapper m)
+        public VideoController(VideoService vs, CategoryService cs, IMapper m)
         {
             _videoService = vs;
             _categoryService = cs;

@@ -1,9 +1,8 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
+using Application.Interfaces.Repository;
+using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
-using Infrastructure.Data;
-using Infrastructure.Data.Repositories;
 using Shared;
 using Shared.Enums;
 using Shared.Exceptions;
@@ -11,22 +10,22 @@ using System.Threading.Channels;
 
 namespace Application.Services
 {
-    public class VideoService : IVideoService
+    public class VideoService
     {
-        private readonly VideoRepository _videoRepo;
+        private readonly IVideoRepository _videoRepo;
         private readonly IThumbnailService _thumbnailService;
         private readonly IMediaInfoService _mediaInfoService;
-        private readonly TagRepository _tagRepository;
+        private readonly ITagRepository _tagRepository;
         private readonly IMapper _mapper;
         private readonly string _pathToWatch = @"E:\ToDelete";
 
 
-        public VideoService(MeltixContext c, IThumbnailService ts, IMediaInfoService ms, IMapper m)
+        public VideoService( IThumbnailService ts, IMediaInfoService ms,IVideoRepository vr, ITagRepository tr,  IMapper m)
         {
-            _videoRepo = new VideoRepository(c);
+            _videoRepo = vr;
             _thumbnailService = ts;
             _mediaInfoService = ms;
-            _tagRepository = new TagRepository(c);
+            _tagRepository = tr;
             _mapper = m;
         }
 

@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 using AutoMapper;
-using meltix_web.Constantes;
+using Web.Constantes;
 using Web.ViewModels;
 
 namespace Web.Mappings

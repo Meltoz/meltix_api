@@ -1,9 +1,10 @@
-﻿using Domain.Entities;
+﻿using Application.Interfaces.Repository;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class TagRepository : GenericRepository<Tag>
+    public class TagRepository : GenericRepository<Tag>, ITagRepository
     {
         public TagRepository(MeltixContext context) : base(context)
         {

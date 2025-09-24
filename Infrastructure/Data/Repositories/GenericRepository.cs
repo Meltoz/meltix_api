@@ -1,4 +1,5 @@
 ﻿
+using Application.Interfaces.Repository;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Exceptions;
@@ -6,7 +7,7 @@ using System.Reflection;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class GenericRepository<T> where T : BaseEntity, new()
+    public class GenericRepository<T>: IRepository<T> where T : BaseEntity, new()
     {
         protected readonly DbContext _context;
         protected readonly DbSet<T> _dbSet;

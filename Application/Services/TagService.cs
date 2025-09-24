@@ -1,21 +1,19 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
+using Application.Interfaces.Repository;
 using AutoMapper;
-using Infrastructure.Data;
-using Infrastructure.Data.Repositories;
 using Shared;
 using Shared.Exceptions;
 
 namespace Application.Services
 {
-    public class TagService : ITagService
+    public class TagService
     {
-        private readonly TagRepository _tagRepository;
+        private readonly ITagRepository _tagRepository;
         private readonly IMapper _mapper;
 
-        public TagService(MeltixContext ctx, IMapper m)
+        public TagService(ITagRepository tr,  IMapper m)
         {
-            _tagRepository = new TagRepository(ctx);
+            _tagRepository = tr;
             _mapper = m;
         }
 
