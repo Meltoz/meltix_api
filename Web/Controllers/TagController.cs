@@ -1,7 +1,7 @@
-﻿using Application.Interfaces;
+﻿using Application.Services;
 using AutoMapper;
-using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
+using Web.Constantes;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -10,10 +10,10 @@ namespace Web.Controllers
     [Route("api/[controller]/[action]")]
     public class TagController : ControllerBase
     {
-        private readonly ITagService _tagService;
+        private readonly TagService _tagService;
         private readonly IMapper _mapper;
 
-        public TagController(ITagService ts, IMapper m): base()
+        public TagController(TagService ts, IMapper m): base()
         {
             _tagService = ts;
             _mapper = m;

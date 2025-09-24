@@ -1,23 +1,20 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
+using Application.Interfaces.Repository;
 using AutoMapper;
 using Domain.Entities;
-using Infrastructure.Data;
-using Infrastructure.Data.Repositories;
-using Shared;
 using Shared.Exceptions;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.Services
 {
-    public class CategoryService : ICategoryService
+    public class CategoryService
     {
-        private readonly CategoryRepository _categoryRepo;
+        private readonly ICategoryRepository _categoryRepo;
         private readonly IMapper _mapper;
 
-        public CategoryService(MeltixContext context, IMapper m)
+        public CategoryService(IMapper m, ICategoryRepository c)
         {
-            _categoryRepo = new CategoryRepository(context);
+            _categoryRepo = c;
             _mapper = m;
         }
 

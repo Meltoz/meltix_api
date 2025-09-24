@@ -2,11 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Shared;
 using Shared.Enums;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Application.Interfaces.Repository;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class VideoRepository : GenericRepository<Video>
+    public class VideoRepository : GenericRepository<Video>, IVideoRepository
     {
         public VideoRepository(MeltixContext context) : base(context)
         {
@@ -101,7 +101,7 @@ namespace Infrastructure.Data.Repositories
             await _dbSet.AddRangeAsync(batch);
         }
 
-        public override async Task<Video?> GetByIdAsync(Guid id)
+        public new async Task<Video?> GetByIdAsync(Guid id)
         {
             return await _dbSet
                 .Include(v => v.Tags)

@@ -1,5 +1,6 @@
 ﻿
 using Shared;
+using Shared.Exceptions;
 
 namespace Domain.Entities
 {
@@ -21,13 +22,17 @@ namespace Domain.Entities
 
         public Category? Category { get; set; }
 
-        private readonly List<Tag> _tags = new();
-        public IReadOnlyCollection<Tag> Tags => _tags;
+        private readonly ICollection<Tag> _tags = new HashSet<Tag>();
+
+        public IReadOnlyCollection<Tag> Tags => _tags.ToList();
 
         public Video() { }
 
         public Video(string path)
         {
+            if (string.IsNullOrEmpty(path.Trim()))
+                throw new ArgumentException("Path must be defined");
+
             Title = Path = path;
             Slug = SlugGenerator.Generate(path);
         }
@@ -38,22 +43,33 @@ namespace Domain.Entities
 
         public Video(string path, string thumbnail, int duration) :this(path, thumbnail)
         {
+            if (duration < 1)
+                throw new ArgumentException("Duration must be postive");
+
             Duration = duration;
         }
 
         public void AddTags(Tag tag)
         {
-            if(!_tags.Contains(tag))
-                _tags.Add(tag);
+            if (_tags.Contains(tag))
+                throw new TagAlreadyExistException();
+
+            _tags.Add(tag);
         }
 
         public void RemoveTags(Tag tag)
         {
+            if (!_tags.Contains(tag))
+                throw new EntityNotFoundException("Tag not found!");
+
             _tags.Remove(tag);
         }
 
         public void ChangeTitle(string title)
         {
+            if (string.IsNullOrEmpty(title.Trim()))
+                throw new ArgumentException("Title must be defined");
+
             Title = title;
             Slug = SlugGenerator.Generate(title);
         }

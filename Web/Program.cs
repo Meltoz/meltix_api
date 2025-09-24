@@ -1,11 +1,11 @@
-using Application.Interfaces;
-using Application.Services;
+using Application;
+using Infrastructure;
 using Infrastructure.Data;
-using meltix_web.Constantes;
+using Web.Constantes;
 using Microsoft.EntityFrameworkCore;
 using Web.Middewares;
 
-namespace meltix_web
+namespace Web
 {
     public class Program
     {
@@ -18,13 +18,9 @@ namespace meltix_web
             services.AddResponseCaching();
 
             // Add services to the container.
-            services.AddScoped<IVideoService, VideoService>();
-            services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<ITagService, TagService>();
-            services.AddSingleton<IFfMpegService, FfmpegService>();
-            services.AddTransient<IThumbnailService, ThumbnailService>();
-            services.AddTransient<IMediaInfoService, MediaInfoService>();
-            services.AddHostedService<FolderScanService>();
+            services.AddApplication();
+
+            services.AddInfrastructure(builder.Configuration);
 
             services.AddControllers();
 

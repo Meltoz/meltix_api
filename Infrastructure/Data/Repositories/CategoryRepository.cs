@@ -1,9 +1,10 @@
-﻿using Domain.Entities;
+﻿using Application.Interfaces.Repository;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class CategoryRepository : GenericRepository<Category>
+    public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
     {
         public CategoryRepository(MeltixContext m) : base(m)
         {
@@ -34,8 +35,7 @@ namespace Infrastructure.Data.Repositories
             return (categories, totalCount);
         }
 
-        // ==== OVER RIDE ====
-        public override async Task<Category?> InsertAsync(Category entity)
+        public new async Task<Category?> InsertAsync(Category entity)
         {
             if (await _dbSet.AnyAsync(c => c.Name.ToLower() == entity.Name.ToLower()))
             {

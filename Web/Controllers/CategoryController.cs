@@ -1,8 +1,10 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
+using Web.Constantes;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -12,10 +14,10 @@ namespace Web.Controllers
     public class CategoryController : ControllerBase
     {
 
-        private readonly ICategoryService _categoryService;
+        private readonly CategoryService _categoryService;
         private readonly IMapper _mapper;
 
-        public CategoryController(ICategoryService cs, IMapper m)
+        public CategoryController(CategoryService cs, IMapper m)
         {
             _categoryService = cs;
             _mapper = m;

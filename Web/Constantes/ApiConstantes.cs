@@ -1,4 +1,4 @@
-﻿namespace meltix_web.Constantes
+﻿namespace Web.Constantes
 {
     public static class ApiConstantes
     {
