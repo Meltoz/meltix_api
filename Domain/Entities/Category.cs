@@ -17,11 +17,11 @@
 
         public void ChangeName(string name)
         {
-            if(name == string.Empty && name == Name)
+            if (string.IsNullOrEmpty(name?.Trim()) || name.ToLower() == Name.ToLower())
             {
                 throw new ArgumentException();
             }
-            Name = name;
+            Name = name.ToLower();
         }
 
         public override bool Equals(object? obj) => obj is Category cat && Equals(cat);
