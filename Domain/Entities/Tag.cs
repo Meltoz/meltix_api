@@ -16,7 +16,7 @@
 
         public void ChangeValue(string value)
         {
-            if(IsValidTag(value))
+            if(IsValidTag(value) && value.ToLower() != Value.ToLower())
                 Value = value.ToLower();
         }
         
@@ -33,7 +33,7 @@
 
         private static bool IsValidTag(string value)
         {
-            if (string.IsNullOrEmpty(value.Trim()))
+            if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException($"{value} is null or empty");
 
             return true;
