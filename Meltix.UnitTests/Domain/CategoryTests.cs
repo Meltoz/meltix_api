@@ -8,7 +8,7 @@ namespace Meltix.UnitTests.Domain
         public void Category_ShouldCreate_WhenName()
         {
             // Arrange
-            var categoryName = "Test";
+            var categoryName = "test";
 
             // Act
             var category = new Category(categoryName); 
@@ -19,11 +19,25 @@ namespace Meltix.UnitTests.Domain
         }
 
         [Fact]
+        public void Category_ShouldCreateWithLower_WhenNameInUpper()
+        {
+            // Arrange
+            var categoryName = "test".ToUpper();
+
+            // Act
+            var category = new Category(categoryName);
+
+            // Assert
+            Assert.NotNull(category);
+            Assert.Equal(categoryName.ToLower(), category.Name);
+        }
+
+        [Fact]
         public void ChangeName_ShouldUpdateName_WhenName()
         {
             // Arrange
-            var categoryName = "Test";
-            var newCategoryName = "Test2";
+            var categoryName = "test";
+            var newCategoryName = "test2";
             var category = new Category(categoryName);
 
             // Act
