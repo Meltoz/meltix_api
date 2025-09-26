@@ -67,7 +67,7 @@ namespace Infrastructure.Data.Repositories
 
             foreach (PropertyInfo property in properties)
             {
-                if (property.Name == "Created" || property.Name == "Updated")
+                if (property.Name is "Created" or "Updated")
                     continue;
 
                 object updatedValue = property.GetValue(entityToUpdate);

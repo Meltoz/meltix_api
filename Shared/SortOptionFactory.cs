@@ -1,4 +1,4 @@
-﻿using Shared.Enums;
+﻿using Shared.Enums.Sorting;
 
 namespace Shared
 {

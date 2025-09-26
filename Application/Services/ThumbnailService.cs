@@ -2,14 +2,9 @@
 
 namespace Application.Services
 {
-    public class ThumbnailService : IThumbnailService
+    public class ThumbnailService(IFfMpegService fs) : IThumbnailService
     {
-        private readonly IFfMpegService _ffMpegService;
-
-        public ThumbnailService(IFfMpegService ffmepService)
-        {
-            _ffMpegService = ffmepService;
-        }
+        private readonly IFfMpegService _ffMpegService = fs;
 
         public async Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, CancellationToken cancellationToken = default)
         {

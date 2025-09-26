@@ -20,6 +20,10 @@ namespace Web.Mappings
 
             CreateMap<TagDTO, TagVM>();
 
+            CreateMap<UserDTO, UserAdminVM>()
+                .ForMember(dest => dest.LastLoggin, opt => opt.MapFrom(src => src.LastLogin))
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
+
         }
     }
 }

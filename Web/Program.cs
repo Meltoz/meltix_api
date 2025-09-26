@@ -1,8 +1,10 @@
 using Application;
+using Application.Mappings;
 using Infrastructure;
 using Infrastructure.Data;
-using Web.Constantes;
 using Microsoft.EntityFrameworkCore;
+using Web.Constantes;
+using Web.Mappings;
 using Web.Middewares;
 
 namespace Web
@@ -29,9 +31,7 @@ namespace Web
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
-            // Adding auto mapper
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+            services.AddAutoMapper(cfg => { }, typeof(DtoToViewModelProfile), typeof(ViewModelToDtoProfile));
 
             // Créer le dossier Data s'il n'existe pas
             var dataDir = Path.Combine(builder.Environment.ContentRootPath, "..", "Data");

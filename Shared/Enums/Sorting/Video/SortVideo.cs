@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Shared.Enums
+namespace Shared.Enums.Sorting.Video
 {
     public enum SortVideo
     {

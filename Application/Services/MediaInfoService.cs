@@ -5,13 +5,9 @@ using System.Text.Json;
 
 namespace Application.Services
 {
-    public class MediaInfoService : IMediaInfoService
+    public class MediaInfoService(IFfMpegService fs) : IMediaInfoService
     {
-        private readonly IFfMpegService _ffmpegService;
-        public MediaInfoService(IFfMpegService fs) 
-        {
-            _ffmpegService = fs;
-        }
+        private readonly IFfMpegService _ffmpegService = fs;
 
         public async Task<MediaInfoDTO> GetMediaInfoAsync(string videoPath, CancellationToken cancellationToken = default)
         {

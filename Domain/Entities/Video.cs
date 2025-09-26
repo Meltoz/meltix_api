@@ -22,9 +22,20 @@ namespace Domain.Entities
 
         public Category? Category { get; set; }
 
-        private readonly ICollection<Tag> _tags = new HashSet<Tag>();
+        private ICollection<Tag> _tags = new HashSet<Tag>();
 
-        public IReadOnlyCollection<Tag> Tags => _tags.ToList();
+        public ICollection<Tag> Tags
+        {
+            get
+            {
+                return _tags;
+            }
+            private set
+            {
+                _tags.Clear();
+                _tags = value;
+            }
+        }
 
         public Video() { }
 
@@ -36,12 +47,13 @@ namespace Domain.Entities
             Title = Path = path;
             Slug = SlugGenerator.Generate(path);
         }
+
         public Video(string path, string thumbnail) : this(path)
         {
             Thumbnail = thumbnail;
         }
 
-        public Video(string path, string thumbnail, int duration) :this(path, thumbnail)
+        public Video(string path, string thumbnail, int duration) : this(path, thumbnail)
         {
             if (duration < 1)
                 throw new ArgumentException("Duration must be postive");
