@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -12,6 +13,8 @@ namespace Infrastructure.Data
         public DbSet<Category> Categories { get; set; }
 
         public DbSet<Tag> Tags { get; set; }
+
+        public DbSet<User> Users { get; set; }
 
         public MeltixContext()
         {
@@ -38,6 +41,23 @@ namespace Infrastructure.Data
 
             modelBuilder.Entity<Tag>(t => t.HasIndex(t2 => t2.Value)
             .IsUnique());
+
+            modelBuilder.Entity<User>(builder =>
+            {
+                builder.OwnsOne(u => u.Pseudo, p =>
+                {
+                    p.Property(x => x.Value)
+                    .HasColumnName("Pseudo")
+                    .IsRequired();
+                });
+
+                builder.OwnsOne(u => u.Password, p =>
+                {
+                    p.Property(x => x.Value)
+                    .HasColumnName("PasswordHash")
+                    .IsRequired();
+                });
+            });
 
             base.OnModelCreating(modelBuilder);
         }

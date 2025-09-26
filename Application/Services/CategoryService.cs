@@ -7,16 +7,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.Services
 {
-    public class CategoryService
+    public class CategoryService(ICategoryRepository c, IMapper m)
     {
-        private readonly ICategoryRepository _categoryRepo;
-        private readonly IMapper _mapper;
-
-        public CategoryService(IMapper m, ICategoryRepository c)
-        {
-            _categoryRepo = c;
-            _mapper = m;
-        }
+        private readonly ICategoryRepository _categoryRepo = c;
+        private readonly IMapper _mapper =m;
 
         public async Task<CategoryDTO> AddCategoryAsync(string categoryName)
         {

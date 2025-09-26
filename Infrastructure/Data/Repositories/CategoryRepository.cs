@@ -4,13 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
+    public class CategoryRepository(MeltixContext context) : GenericRepository<Category>(context), ICategoryRepository
     {
-        public CategoryRepository(MeltixContext m) : base(m)
-        {
-
-        }
-
         public async Task<Category?> ByNameAsync(string name)
         {
             var category = await _dbSet.Where(c => c.Name.ToLower() == name.ToLower()).FirstOrDefaultAsync();

@@ -1,4 +1,4 @@
-﻿namespace Shared.Enums
+﻿namespace Shared.Enums.Sorting
 {
     public enum SortDirection
     {

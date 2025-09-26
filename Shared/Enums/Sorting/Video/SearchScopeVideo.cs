@@ -1,4 +1,4 @@
-﻿namespace Shared.Enums
+﻿namespace Shared.Enums.Sorting.Video
 {
     public enum SearchScopeVideo
     {

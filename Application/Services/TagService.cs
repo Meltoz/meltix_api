@@ -6,16 +6,10 @@ using Shared.Exceptions;
 
 namespace Application.Services
 {
-    public class TagService
+    public class TagService(ITagRepository tr, IMapper m)
     {
-        private readonly ITagRepository _tagRepository;
-        private readonly IMapper _mapper;
-
-        public TagService(ITagRepository tr,  IMapper m)
-        {
-            _tagRepository = tr;
-            _mapper = m;
-        }
+        private readonly ITagRepository _tagRepository = tr;
+        private readonly IMapper _mapper = m;
 
         public async Task<PagedResult<TagDTO>> Search(int pageIndex, int pageSize, string searchTerm)
         {
@@ -31,6 +25,7 @@ namespace Application.Services
                 TotalCount = tags.totalCount
             };            
         }
+
         public async Task<TagDTO> Edit(Guid id, string value)
         {
             var tagToUpdate = await _tagRepository.GetByIdAsync(id);

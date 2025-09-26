@@ -4,13 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class TagRepository : GenericRepository<Tag>, ITagRepository
+    public class TagRepository(MeltixContext context) : GenericRepository<Tag>(context), ITagRepository
     {
-        public TagRepository(MeltixContext context) : base(context)
-        {
-        
-        }
-
         public async Task<Tag?> GetByNameAsync(string value)
         {
             return await _dbSet.SingleOrDefaultAsync(x => x.Value.ToLower() == value.ToLower());

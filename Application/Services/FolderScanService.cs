@@ -1,5 +1,4 @@
-﻿using Application.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Application.Services
@@ -12,8 +11,6 @@ namespace Application.Services
         {
             var scope = sf.CreateScope();
             _videoService = scope.ServiceProvider.GetService<VideoService>();
-
-
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

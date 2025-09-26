@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
 using Shared;
-using Shared.Enums;
+using Shared.Enums.Sorting.Video;
 
 namespace Application.Interfaces.Repository
 {
@@ -12,7 +12,7 @@ namespace Application.Interfaces.Repository
 
         public Task<(IEnumerable<Video> videos, int totalCount)> GetRecommendation(int skip, int take, Video reference);
 
-        public Task InsertRangeAsync(Video[] batch);
+        public Task InsertRangeAsync(IEnumerable<Video> batch);
 
         public new Task<Video?> GetByIdAsync(Guid id);
     }
