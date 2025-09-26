@@ -10,7 +10,6 @@ namespace Infrastructure.Data.Repositories
 {
     public class UserRepository(MeltixContext context) : GenericRepository<User>(context), IUserRepository
     {
-
         public async Task<PagedResult<User>> Search(int skip, int take, SortOption<SortUser> sortOption, bool onlyAdmin, string? search)
         {
             var query = _dbSet
@@ -30,6 +29,7 @@ namespace Infrastructure.Data.Repositories
             query = SortQuery(query, sortOption);
 
            return await PaginateAsync<User>(query, skip, take);
+
         }
 
         private IQueryable<User> SortQuery(IQueryable<User> query, SortOption<SortUser> sortOption)

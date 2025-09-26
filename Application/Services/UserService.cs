@@ -22,6 +22,7 @@ namespace Application.Services
             return new PagedResult<UserDTO> {
                 Data = users,
                 TotalCount = response.TotalCount
+
             };
         }
     }
