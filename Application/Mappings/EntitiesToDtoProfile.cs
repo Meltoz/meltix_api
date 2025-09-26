@@ -1,6 +1,8 @@
 ﻿using Application.DTOs;
 using AutoMapper;
+using AutoMapper.Extensions.EnumMapping;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Mappings
 {
@@ -17,6 +19,11 @@ namespace Application.Mappings
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.VideoCount, opt => opt.MapFrom(src => src.Videos.Count))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Value));
+
+            CreateMap<Role, RoleDTO>()
+                .ConvertUsingEnumMapping(opt => opt.MapByName().MapValue(Role.Administrator, RoleDTO.Admin));
+
+            CreateMap<User, UserDTO>();
         }
     }
 }

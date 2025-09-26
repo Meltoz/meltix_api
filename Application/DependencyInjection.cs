@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Services;
+using Application.Mappings;
 using Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -16,10 +17,13 @@ namespace Application
             services.AddScoped<VideoService>();
             services.AddScoped<CategoryService>();
             services.AddScoped<TagService>();
+            services.AddScoped<UserService>();
             services.AddSingleton<IFfMpegService, FfmpegService>();
             services.AddTransient<IThumbnailService, ThumbnailService>();
             services.AddTransient<IMediaInfoService, MediaInfoService>();
             services.AddHostedService<FolderScanService>();
+
+            services.AddAutoMapper(cfg => { }, typeof(DtoToEntitiesProfile), typeof(EntitiesToDtoProfile));
 
             return services;
         }

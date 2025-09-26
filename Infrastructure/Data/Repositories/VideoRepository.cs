@@ -1,16 +1,14 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared;
-using Shared.Enums;
 using Application.Interfaces.Repository;
+using Shared.Enums.Sorting;
+using Shared.Enums.Sorting.Video;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class VideoRepository : GenericRepository<Video>, IVideoRepository
+    public class VideoRepository(MeltixContext context) : GenericRepository<Video>(context), IVideoRepository
     {
-        public VideoRepository(MeltixContext context) : base(context)
-        {
-        }
 
         public async Task<Video?> GetBySlug(string slug)
         {
@@ -20,7 +18,7 @@ namespace Infrastructure.Data.Repositories
                 .Where(v => v.Slug == slug).FirstOrDefaultAsync();
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All)
+        public async Task<PagedResult<Video>> Search(int skip, int take, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All)
         {
             var query = _dbSet
                 .AsNoTracking()
@@ -67,7 +65,7 @@ namespace Infrastructure.Data.Repositories
             return await PaginateAsync<Video>(query, skip, take);
         }
 
-        public async Task<(IEnumerable<Video> videos, int totalCount)> GetRecommendation(int skip, int take, Video reference)
+        public async Task<PagedResult<Video>> GetRecommendation(int skip, int take, Video reference)
         {
             var referenceTagIds = reference.Tags.Select(t => t.Value).ToList();
             var referenceCategoryId = reference.CategoryId;
@@ -96,7 +94,7 @@ namespace Infrastructure.Data.Repositories
             return await PaginateAsync<Video>(query.Select(x => x.Video), skip, take);
         }
 
-        public async Task InsertRangeAsync(Video[] batch)
+        public async Task InsertRangeAsync(IEnumerable<Video> batch)
         {
             await _dbSet.AddRangeAsync(batch);
         }

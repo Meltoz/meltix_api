@@ -4,30 +4,20 @@ using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
 using Shared;
-using Shared.Enums;
+using Shared.Enums.Sorting.Video;
 using Shared.Exceptions;
 using System.Threading.Channels;
 
 namespace Application.Services
 {
-    public class VideoService
+    public class VideoService(IThumbnailService ts, IMediaInfoService ms, IVideoRepository vr, ITagRepository tr, IMapper m)
     {
-        private readonly IVideoRepository _videoRepo;
-        private readonly IThumbnailService _thumbnailService;
-        private readonly IMediaInfoService _mediaInfoService;
-        private readonly ITagRepository _tagRepository;
-        private readonly IMapper _mapper;
+        private readonly IVideoRepository _videoRepo = vr;
+        private readonly IThumbnailService _thumbnailService = ts;
+        private readonly IMediaInfoService _mediaInfoService = ms;
+        private readonly ITagRepository _tagRepository = tr;
+        private readonly IMapper _mapper = m;
         private readonly string _pathToWatch = @"E:\ToDelete";
-
-
-        public VideoService( IThumbnailService ts, IMediaInfoService ms,IVideoRepository vr, ITagRepository tr,  IMapper m)
-        {
-            _videoRepo = vr;
-            _thumbnailService = ts;
-            _mediaInfoService = ms;
-            _tagRepository = tr;
-            _mapper = m;
-        }
 
         public async Task<VideoDTO> FindBySlugAsync(string slug)
         {
@@ -44,10 +34,10 @@ namespace Application.Services
 
             var r = await _videoRepo.Search(skip, pageSize, search, sortOption, scope);
 
-            var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.videos);
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.Data);
             return new PagedResult<VideoDTO> {
                 Data= videos,
-                TotalCount = r.totalCount
+                TotalCount = r.TotalCount
             };
         }
 
@@ -61,12 +51,12 @@ namespace Application.Services
 
             var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
 
-            var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.Data);
 
             return new PagedResult<VideoDTO>
             {
                 Data = videos,
-                TotalCount = data.totalCount
+                TotalCount = data.TotalCount
             };
         }
 
@@ -123,7 +113,7 @@ namespace Application.Services
 
                     if (batch.Count >= batchSize)
                     {
-                        await _videoRepo.InsertRangeAsync(batch.ToArray());
+                        await _videoRepo.InsertRangeAsync(batch);
                         await _videoRepo.SaveAsync();
                         batch.Clear();
                     }
@@ -131,7 +121,7 @@ namespace Application.Services
 
                 if (batch.Count > 0)
                 {
-                    await _videoRepo.InsertRangeAsync(batch.ToArray());
+                    await _videoRepo.InsertRangeAsync(batch);
                     await _videoRepo.SaveAsync();
                 }
             });

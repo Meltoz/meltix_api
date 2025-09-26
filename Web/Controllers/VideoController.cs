@@ -5,7 +5,7 @@ using AutoMapper;
 using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
-using Shared.Enums;
+using Shared.Enums.Sorting.Video;
 using System.Text.RegularExpressions;
 using Web.Constantes;
 using Web.ViewModels;
@@ -105,7 +105,7 @@ namespace Web.Controllers
 
             var videoUpdated = await _videoService.UpdateVideoAsync(videoDTO);
 
-            return Ok(_mapper.Map<VideoVM>(videoDTO)); //
+            return Ok(_mapper.Map<VideoVM>(videoDTO));
         }
 
         [HttpGet]
