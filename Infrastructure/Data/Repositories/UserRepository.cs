@@ -10,7 +10,7 @@ namespace Infrastructure.Data.Repositories
 {
     public class UserRepository(MeltixContext context) : GenericRepository<User>(context), IUserRepository
     {
-        public async Task<PagedResult<User>> Search(int skip, int take, SortOption<SortUser> sortOption, bool onlyAdmin, string? search)
+        public async Task<PagedResult<User>> Search(int skip, int take, SortOption<SortUser> sortOption, bool onlyAdmin, string search = "")
         {
             var query = _dbSet
                 .AsNoTracking()
@@ -21,7 +21,7 @@ namespace Infrastructure.Data.Repositories
                 query = query.Where(u => u.Role == Role.Administrator);
             }
 
-            if (!string.IsNullOrWhiteSpace(search))
+            if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(u => u.Pseudo.Value.Contains(search));
             }

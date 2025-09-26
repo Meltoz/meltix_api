@@ -39,20 +39,27 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateUser()
+        public async Task<IActionResult> Create([FromBody]LoginRequestVM user)
         {
-            return Ok();
+            if(!ModelState.IsValid)
+                return BadRequest();
+
+            var userCreated = await _userService.CreateUser(user.Pseudo, user.Password);
+
+            return Ok(_mapper.Map<UserAdminVM>(userCreated));
         }
 
         [HttpPatch]
-        public async Task<IActionResult> UpdateUser()
+        public async Task<IActionResult> Update()
         {
             return Ok();
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
+            await _userService.DeleteUserAsync(id);
+
             return Ok();
         }
 
