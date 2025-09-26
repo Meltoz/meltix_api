@@ -3,7 +3,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 using Shared.Enums.Sorting.User;
-using Shared.Enums.Sorting.Video;
 using System.Text.RegularExpressions;
 using Web.Constantes;
 using Web.ViewModels;
@@ -39,9 +38,27 @@ namespace Web.Controllers
             return Ok(users);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateUser()
+        {
+            return Ok();
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> UpdateUser()
+        {
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            return Ok();
+        }
+
         private bool GetSorting(string sort, out SortOption<SortUser> sortOption)
         {
-            var patternSort = @"^(create|pseudo|lastlogin)_(ascending|descending)$";
+            var patternSort = @"^(create|role|pseudo|lastlogin)_(ascending|descending)$";
             var regex = new Regex(patternSort);
             var match = regex.Match(sort);
             if (!match.Success)

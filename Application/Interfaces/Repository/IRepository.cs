@@ -1,10 +1,12 @@
-﻿namespace Application.Interfaces.Repository
+﻿using Shared;
+
+namespace Application.Interfaces.Repository
 {
     public interface IRepository<T>
     {
         public Task<IEnumerable<T>> GetAllAsync();
 
-        public Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int skip, int take);
+        public Task<PagedResult<T>> GetPaginateAsync(int skip, int take);
 
         public Task<T?> GetByIdAsync(Guid id);
 

@@ -17,11 +17,12 @@ namespace Application.Services
 
             var response = await _userRepository.Search(skip, pageSize, sort, onlyAdmin, search);
 
-            var users = _mapper.Map<IEnumerable<UserDTO>>(response.users);
+            var users = _mapper.Map<IEnumerable<UserDTO>>(response.Data);
 
             return new PagedResult<UserDTO> {
                 Data = users,
-                TotalCount = response.totalCount
+                TotalCount = response.TotalCount
+
             };
         }
     }

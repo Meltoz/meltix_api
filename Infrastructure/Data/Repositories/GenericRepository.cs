@@ -2,6 +2,7 @@
 using Application.Interfaces.Repository;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shared;
 using Shared.Exceptions;
 using System.Reflection;
 
@@ -21,7 +22,7 @@ namespace Infrastructure.Data.Repositories
         public virtual async Task<IEnumerable<T>> GetAllAsync() 
             => await _dbSet.ToListAsync();
 
-        public virtual async Task<(IEnumerable<T> data, int totalCount)> GetPaginateAsync(int skip, int take)
+        public virtual async Task<PagedResult<T>> GetPaginateAsync(int skip, int take)
         {
             var query = _dbSet.OrderBy(f => f.Created);
             return await PaginateAsync<T>(query, skip, take);
@@ -221,11 +222,16 @@ namespace Infrastructure.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
-        protected virtual async Task<(IEnumerable<T> data, int totalCount)> PaginateAsync<T>(IQueryable<T> query, int skip, int take)
+        protected virtual async Task<PagedResult<T>> PaginateAsync<T>(IQueryable<T> query, int skip, int take)
         {
             var total = await query.CountAsync();
             var data = await query.Skip(skip).Take(take).ToListAsync();
-            return (data, total);
-        } 
+
+            return new PagedResult<T>
+            {
+                Data = data,
+                TotalCount = total
+            };
+        }
     }
 }

@@ -10,8 +10,7 @@ namespace Infrastructure.Data.Repositories
 {
     public class UserRepository(MeltixContext context) : GenericRepository<User>(context), IUserRepository
     {
-
-        public async Task<(IEnumerable<User> users, int totalCount)> Search(int skip, int take, SortOption<SortUser> sortOption, bool onlyAdmin, string? search)
+        public async Task<PagedResult<User>> Search(int skip, int take, SortOption<SortUser> sortOption, bool onlyAdmin, string? search)
         {
             var query = _dbSet
                 .AsNoTracking()
@@ -29,7 +28,8 @@ namespace Infrastructure.Data.Repositories
 
             query = SortQuery(query, sortOption);
 
-            return await PaginateAsync<User>(query, skip, take);
+           return await PaginateAsync<User>(query, skip, take);
+
         }
 
         private IQueryable<User> SortQuery(IQueryable<User> query, SortOption<SortUser> sortOption)

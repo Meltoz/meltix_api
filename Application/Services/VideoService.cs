@@ -34,10 +34,10 @@ namespace Application.Services
 
             var r = await _videoRepo.Search(skip, pageSize, search, sortOption, scope);
 
-            var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.videos);
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(r.Data);
             return new PagedResult<VideoDTO> {
                 Data= videos,
-                TotalCount = r.totalCount
+                TotalCount = r.TotalCount
             };
         }
 
@@ -51,12 +51,12 @@ namespace Application.Services
 
             var data = await _videoRepo.GetRecommendation(skip, pageSize, video);
 
-            var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.videos);
+            var videos = _mapper.Map<IEnumerable<VideoDTO>>(data.Data);
 
             return new PagedResult<VideoDTO>
             {
                 Data = videos,
-                TotalCount = data.totalCount
+                TotalCount = data.TotalCount
             };
         }
 

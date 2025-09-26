@@ -8,9 +8,9 @@ namespace Application.Interfaces.Repository
     {
         public Task<Video?> GetBySlug(string slug);
 
-        public Task<(IEnumerable<Video> videos, int totalCount)> Search(int skip, int take, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All);
+        public Task<PagedResult<Video>> Search(int skip, int take, string search, SortOption<SortVideo> sortOption, SearchScopeVideo scope = SearchScopeVideo.All);
 
-        public Task<(IEnumerable<Video> videos, int totalCount)> GetRecommendation(int skip, int take, Video reference);
+        public Task<PagedResult<Video>> GetRecommendation(int skip, int take, Video reference);
 
         public Task InsertRangeAsync(IEnumerable<Video> batch);
 
