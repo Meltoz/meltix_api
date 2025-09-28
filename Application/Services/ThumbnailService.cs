@@ -6,14 +6,15 @@ namespace Application.Services
     {
         private readonly IFfMpegService _ffMpegService = fs;
 
-        public async Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, CancellationToken cancellationToken = default)
+        public async Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, TimeSpan timecode, CancellationToken cancellationToken = default)
         {
             string input = $"\"{Path.GetFullPath(videoPath).Replace("\\", "/")}\"";
             string output = $"\"{Path.GetFullPath(outputPath).Replace("\\", "/")}\"";
 
+
             var args = new List<string>
             {
-            "-ss", "00:00:01",
+            "-ss", timecode.ToString(),
             "-i", input,
             "-frames:v", "1",
             "-q:v", "2",

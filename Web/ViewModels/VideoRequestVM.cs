@@ -14,6 +14,8 @@ namespace Web.ViewModels
         [StringLength(500, MinimumLength = 0)]
         public string? Description { get; set; } = string.Empty;
 
+        public string? Timecode { get; set; }
+
         public IFormFile? Img { get; set; }
 
         public Guid? CategoryId { get; set; }
@@ -29,6 +31,12 @@ namespace Web.ViewModels
                     "Either CategoryId or CategoryName must be provided.",
                     new[] { nameof(CategoryId), nameof(Category) }
                 );
+            }
+
+            if(Timecode is not null && Img is not null)
+            {
+                yield return new ValidationResult(
+                    "Impossible to use both thumbnail", new[] { nameof(Timecode), nameof(Img) });
             }
         }
     }

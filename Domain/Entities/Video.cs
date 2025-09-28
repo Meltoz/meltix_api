@@ -85,5 +85,12 @@ namespace Domain.Entities
             Title = title;
             Slug = SlugGenerator.Generate(title);
         }
+
+        public void ChangeThumbnail(string thumbnail)
+        {
+            if (string.IsNullOrEmpty(thumbnail.Trim()))
+                throw new ArgumentException("Thumbnail must be defined");
+            Thumbnail = thumbnail;
+        }
     }
 }
