@@ -1,6 +1,8 @@
 ﻿using Application.DTOs;
 using AutoMapper;
+using AutoMapper.Extensions.EnumMapping;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Mappings
 {
@@ -17,7 +19,11 @@ namespace Application.Mappings
                 .ForMember(dest => dest.Category, opt => opt.Ignore())
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.CategoryId, opt => opt.MapFrom(src => src.Category.Id));
-                
+
+            CreateMap<RoleDTO, Role>()
+                    .ConvertUsingEnumMapping(opt => opt.MapByName().MapValue(RoleDTO.Admin, Role.Administrator));
+
+
         }
     }
 }

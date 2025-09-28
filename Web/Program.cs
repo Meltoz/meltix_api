@@ -3,6 +3,8 @@ using Application.Mappings;
 using Infrastructure;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Web.Constantes;
 using Web.Mappings;
 using Web.Middewares;
@@ -24,7 +26,10 @@ namespace Web
 
             services.AddInfrastructure(builder.Configuration);
 
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+            });
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             services.AddOpenApi();
