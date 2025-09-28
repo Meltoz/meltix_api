@@ -2,6 +2,6 @@
 {
     public interface IThumbnailService
     {
-        public Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, CancellationToken cancellationToken =default);
+        public Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, TimeSpan timecode,  CancellationToken cancellationToken =default);
     }
 }

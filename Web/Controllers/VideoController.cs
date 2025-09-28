@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Application.Interfaces.Services;
 using Application.Services;
 using AutoMapper;
 using meltix_web.Constantes;
@@ -89,7 +90,7 @@ namespace Web.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            VideoDTO videoDTO = _mapper.Map<VideoDTO>(video);
+            UpdateVideoDTO videoDTO = _mapper.Map<UpdateVideoDTO>(video);
 
             CategoryDTO category;
             if (video.CategoryId.HasValue)
@@ -100,6 +101,7 @@ namespace Web.Controllers
             {
                 category = await _categoryService.GetByNameAsync(video.Category);
             }
+
 
             videoDTO.Category = category;
 

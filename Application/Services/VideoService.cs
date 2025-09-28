@@ -135,8 +135,9 @@ namespace Application.Services
                 var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(file)}.jpg";
                 var ouputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var timeSpanThumbnail = TimeSpan.FromSeconds(1);
 
-                var thumbnail = await _thumbnailService.GenerateThumbnailAsync(inputPath, ouputPath, cts.Token);
+                var thumbnail = await _thumbnailService.GenerateThumbnailAsync(inputPath, ouputPath, timeSpanThumbnail, cts.Token);
                 var mediaInfo = await _mediaInfoService.GetMediaInfoAsync(inputPath, cts.Token);
 
                 var video = new Video(file, thumbnail, mediaInfo.Duration);
@@ -148,7 +149,7 @@ namespace Application.Services
             await consumer;
         }
 
-        public async Task<VideoDTO> UpdateVideoAsync(VideoDTO videoDTO)
+        public async Task<VideoDTO> UpdateVideoAsync(UpdateVideoDTO videoDTO)
         {
             var videoEntity = await _videoRepo.GetByIdAsync(videoDTO.Id);
             if (videoEntity == null)
@@ -157,6 +158,51 @@ namespace Application.Services
             if (videoEntity.Title != videoDTO.Title)
             {
                 videoEntity.ChangeTitle(videoDTO.Title);
+            }
+
+            if(videoDTO.Timecode != TimeSpan.Zero)
+            {
+                var fileName = Path.GetFileName(videoEntity.Path);
+                if (string.IsNullOrEmpty(fileName) || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    throw new ArgumentException("Invalid file name");
+
+                var inputPath = Path.Combine(_pathToWatch, fileName);
+                if (!File.Exists(inputPath))
+                    throw new FileNotFoundException($"Video file not found: {inputPath}");
+
+                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
+
+                var outputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+                try
+                {
+                    var thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(inputPath, outputPath, videoDTO.Timecode.Value, cts.Token);
+                    videoEntity.ChangeThumbnail(thumbnailPath);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (File.Exists(outputPath))
+                        File.Delete(outputPath);
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    if (File.Exists(outputPath))
+                        File.Delete(outputPath);
+                    throw;
+                }
+            }
+
+            if(videoDTO.ThumbnailFile != null)
+            {
+                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
+                var outputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
+                using (var stream = new FileStream(outputPath, FileMode.Create))
+                {
+                    await videoDTO.ThumbnailFile.CopyToAsync(stream);
+                }
+                videoDTO.Thumbnail = outputPath;
             }
 
             var dtoTags = new HashSet<string>(videoDTO.Tags);                
