@@ -2,6 +2,7 @@
 {
     public class UserDTO
     {
+        public Guid Id { get; set; }
         public string Pseudo { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;

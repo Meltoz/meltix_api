@@ -44,15 +44,26 @@ namespace Web.Controllers
             if(!ModelState.IsValid)
                 return BadRequest();
 
-            var userCreated = await _userService.CreateUser(user.Pseudo, user.Password);
+            if(user.Password == null) 
+                return BadRequest();
+
+            var userCreated = await _userService.CreateUser(user.Pseudo, user.Password, user.Role);
 
             return Ok(_mapper.Map<UserAdminVM>(userCreated));
         }
 
         [HttpPatch]
-        public async Task<IActionResult> Update()
+        public async Task<IActionResult> Update([FromBody]LoginRequestVM user)
         {
-            return Ok();
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            if (user.Id == null || user.Id == Guid.Empty)
+                return BadRequest();
+
+            var updated = await _userService.EditUserAdmin(user.Id.Value, user.Pseudo, user.Password, user.Role);
+
+            return Ok(_mapper.Map<UserAdminVM>(updated));
         }
 
         [HttpDelete]
