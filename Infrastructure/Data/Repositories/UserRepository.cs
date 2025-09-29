@@ -23,7 +23,7 @@ namespace Infrastructure.Data.Repositories
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(u => u.Pseudo.Value.Contains(search));
+                query = query.Where(u => u.Pseudo.Value.ToLower().Contains(search.ToLower()));
             }
 
             query = SortQuery(query, sortOption);
@@ -42,8 +42,8 @@ namespace Infrastructure.Data.Repositories
                     (SortUser.Create, SortDirection.Descending) => query.OrderByDescending(u => u.Created),
                     (SortUser.Role, SortDirection.Ascending) => query.OrderBy(u => u.Role),
                     (SortUser.Role, SortDirection.Descending) => query.OrderByDescending(u => u.Role),
-                    (SortUser.Pseudo, SortDirection.Ascending) => query.OrderBy(u => u.Pseudo.Value),
-                    (SortUser.Pseudo, SortDirection.Descending) => query.OrderByDescending(u => u.Pseudo.Value),
+                    (SortUser.Pseudo, SortDirection.Ascending) => query.OrderBy(u => u.Pseudo),
+                    (SortUser.Pseudo, SortDirection.Descending) => query.OrderByDescending(u => u.Pseudo),
                     (SortUser.LastLoggin, SortDirection.Ascending) => query.OrderBy(u => u.LastLogin),
                     (SortUser.LastLoggin, SortDirection.Descending) => query.OrderByDescending(u => u.LastLogin),
                     _ => query.OrderBy(u => u.Created)
