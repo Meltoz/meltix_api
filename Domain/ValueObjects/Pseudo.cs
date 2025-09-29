@@ -33,5 +33,12 @@ namespace Domain.ValueObjects
         }
 
         public override string ToString() => Value;
+
+        public bool Contains (string substring)
+        {
+            return Value != null && Value.Contains(substring, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static implicit operator string(Pseudo pseudo) => pseudo.Value;
     }
 }
