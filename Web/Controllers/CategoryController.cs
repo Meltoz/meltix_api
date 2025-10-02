@@ -1,8 +1,6 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
 using Application.Services;
 using AutoMapper;
-using meltix_web.Constantes;
 using Microsoft.AspNetCore.Mvc;
 using Web.Constantes;
 using Web.ViewModels;

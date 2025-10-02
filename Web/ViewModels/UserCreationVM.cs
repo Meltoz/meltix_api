@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Web.ViewModels
 {
-    public class LoginRequestVM
+    public class UserCreationVM
     {
         public Guid? Id { get; set; }
 

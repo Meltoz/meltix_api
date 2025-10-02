@@ -2,11 +2,6 @@
 using Application.Mappings;
 using Application.Services;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application
 {
@@ -21,7 +16,8 @@ namespace Application
             services.AddSingleton<IFfMpegService, FfmpegService>();
             services.AddTransient<IThumbnailService, ThumbnailService>();
             services.AddTransient<IMediaInfoService, MediaInfoService>();
-            services.AddHostedService<FolderScanService>();
+            services.AddTransient<JwtService>();
+            services.AddHostedService<FolderScanService>(); 
 
             services.AddAutoMapper(cfg => { }, typeof(DtoToEntitiesProfile), typeof(EntitiesToDtoProfile));
 

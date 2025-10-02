@@ -217,7 +217,7 @@ namespace Meltix.IntegrationTests.Web
             var context = DbContextProvider.SetupContext();
             var factory = new CustomWebApplicationFactory(context);
             var client = factory.CreateClient();
-            var user = new LoginRequestVM { Pseudo = "Meltoz", Password = "P@ssw0rd", Role = RoleDTO.User };
+            var user = new UserCreationVM { Pseudo = "Meltoz", Password = "P@ssw0rd", Role = RoleDTO.User };
             var content = JsonContent.Create(user);
 
             // Act
@@ -239,7 +239,7 @@ namespace Meltix.IntegrationTests.Web
             var context = DbContextProvider.SetupContext();
             var client = CreateClient(context);
 
-            var user = new LoginRequestVM { Pseudo = _initialUserName, Password = _initialPassword, Role = RoleDTO.Admin };
+            var user = new UserCreationVM { Pseudo = _initialUserName, Password = _initialPassword, Role = RoleDTO.Admin };
             var content = JsonContent.Create(user);
 
             // Act
@@ -260,7 +260,7 @@ namespace Meltix.IntegrationTests.Web
             // Arrange
             var context = DbContextProvider.SetupContext();
             var client = CreateClient(context);
-            var user = new LoginRequestVM { Pseudo = _initialUserName, Password = "password" };
+            var user = new UserCreationVM { Pseudo = _initialUserName, Password = "password" };
             var content = JsonContent.Create(user);
 
             // Act
@@ -277,7 +277,7 @@ namespace Meltix.IntegrationTests.Web
             var context = DbContextProvider.SetupContext();
             var client = CreateClient(context);
 
-            var user = new LoginRequestVM { Pseudo = "me", Password = _initialPassword};
+            var user = new UserCreationVM { Pseudo = "me", Password = _initialPassword};
             var content = JsonContent.Create(user);
 
             // Act
@@ -294,7 +294,7 @@ namespace Meltix.IntegrationTests.Web
             var context = DbContextProvider.SetupContext();
             var factory = new CustomWebApplicationFactory(context);
             var client = factory.CreateClient();
-            var user = new LoginRequestVM { Pseudo = "azertyuiopqsdfghjklmwxcvbnazertyuiopqsdfghjklmwxcvbn", Password = "P@ssw0rd" };
+            var user = new UserCreationVM { Pseudo = "azertyuiopqsdfghjklmwxcvbnazertyuiopqsdfghjklmwxcvbn", Password = "P@ssw0rd" };
             var content = JsonContent.Create(user);
 
             // Act
@@ -313,7 +313,7 @@ namespace Meltix.IntegrationTests.Web
             var client = CreateClient(context);
             var newPseudo = "Meltoz2";
 
-            var userToEdit = new LoginRequestVM { Id = userId, Pseudo = newPseudo, Role = RoleDTO.Admin };
+            var userToEdit = new UserCreationVM { Id = userId, Pseudo = newPseudo, Role = RoleDTO.Admin };
             var content = JsonContent.Create(userToEdit);
 
             // Act
@@ -336,7 +336,7 @@ namespace Meltix.IntegrationTests.Web
             var context = await CreateInitialUser(userId);
 
             var client = CreateClient(context);
-            var userToEdit = new LoginRequestVM { Id = userId, Pseudo = _initialUserName, Role = RoleDTO.User };
+            var userToEdit = new UserCreationVM { Id = userId, Pseudo = _initialUserName, Role = RoleDTO.User };
             var content = JsonContent.Create(userToEdit);
 
             // Act

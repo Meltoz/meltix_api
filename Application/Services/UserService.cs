@@ -55,7 +55,7 @@ namespace Application.Services
             if (!string.IsNullOrEmpty(password) && Password.FromPlainText(password) != user.Password)
                 user.ChangePassword(password);
 
-            if(pseudo != user.Pseudo.Value)
+            if(pseudo != user.Pseudo)
                    user.ChangePseudo(pseudo);
 
             var userUpdated = await _userRepository.UpdateAsync(user);
@@ -72,6 +72,29 @@ namespace Application.Services
             _userRepository.Delete(id);
 
             return true;
+        }
+
+        public async Task<UserDTO> ValidateUser(string pseudo, string password)
+        {
+            var testedPassword = Password.FromPlainText(password);
+            var testedPseudo = Pseudo.Create(pseudo);
+
+            var user = await _userRepository.AuthUser(testedPseudo, testedPassword);
+
+            if (user is null)
+                throw new EntityNotFoundException("User not found");
+
+            return _mapper.Map<UserDTO>(user);
+        }
+
+        public async Task<UserDTO> GetByIdAsync(Guid id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+
+            if (user is null)
+                throw new EntityNotFoundException($"user with id '{id}' not found");
+
+            return _mapper.Map<UserDTO>(user);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Repository;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Shared;
 using Shared.Enums.Sorting;
@@ -55,6 +56,11 @@ namespace Infrastructure.Data.Repositories
             }
 
             return query;
+        }
+
+        public async Task<User> AuthUser(Pseudo pseudo, Password password)
+        {
+            return await _dbSet.Where(u => u.Password == password && u.Pseudo.Value.ToLower() == pseudo.Value.ToLower()).SingleOrDefaultAsync();
         }
     }
 }
