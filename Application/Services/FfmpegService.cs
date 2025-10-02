@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Services;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Shared.Configuration;
 using System.Diagnostics;
 
 namespace Application.Services
@@ -10,10 +11,10 @@ namespace Application.Services
         private readonly string _ffprobePath;
 
 
-        public FfmpegService(IConfiguration configuration)
+        public FfmpegService(IOptions<FfmpegConfiguration> config)
         {
-            _ffmpegPath = configuration["FFmpeg:Path"] ?? "ffmpeg";
-            _ffprobePath = configuration["FFmpeg:ProbePath"] ?? "ffprobe";
+            _ffmpegPath = config.Value.Path ?? "ffmpeg";
+            _ffprobePath = config.Value.ProbePath ?? "ffprobe";
 
         }
 

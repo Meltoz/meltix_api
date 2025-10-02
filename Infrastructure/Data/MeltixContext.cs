@@ -44,18 +44,19 @@ namespace Infrastructure.Data
 
             modelBuilder.Entity<User>(builder =>
             {
-                builder.OwnsOne(u => u.Pseudo, p =>
+                builder.ComplexProperty(u => u.Pseudo, p =>
                 {
                     p.Property(x => x.Value)
-                    .HasColumnName("Pseudo")
-                    .IsRequired();
+                        .HasColumnName("Pseudo")
+                        .IsRequired();
                 });
 
-                builder.OwnsOne(u => u.Password, p =>
+
+                builder.ComplexProperty(u => u.Password, p =>
                 {
                     p.Property(x => x.Value)
-                    .HasColumnName("PasswordHash")
-                    .IsRequired();
+                        .HasColumnName("Password")
+                        .IsRequired();
                 });
             });
 

@@ -39,7 +39,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody]LoginRequestVM user)
+        public async Task<IActionResult> Create([FromBody]UserCreationVM user)
         {
             if(!ModelState.IsValid)
                 return BadRequest();
@@ -53,7 +53,7 @@ namespace Web.Controllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> Update([FromBody]LoginRequestVM user)
+        public async Task<IActionResult> Update([FromBody]UserCreationVM user)
         {
             if (!ModelState.IsValid)
                 return BadRequest();

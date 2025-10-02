@@ -8,5 +8,7 @@
         public readonly static string HeaderIfNoneMatch = "If-None-Match";
         public readonly static string HeaderETag = "Etag";
         public readonly static string HeaderCacheControl = "Cache-Control";
+        public readonly static string AccessTokenCookieName = "access_token";
+        public readonly static string RefreshTokenCookieName = "refresh_token";
     }
 }
