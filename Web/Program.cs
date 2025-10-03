@@ -24,6 +24,7 @@ namespace Web
 
             services.Configure<AuthConfiguration>(builder.Configuration.GetSection("Auth"));
             services.Configure<FfmpegConfiguration>(builder.Configuration.GetSection("FFmpeg"));
+            services.Configure<EncryptionConfiguration>(builder.Configuration.GetSection("Encryption"));
 
             services.AddResponseCaching();
 
@@ -85,7 +86,7 @@ namespace Web
                 var optionsBuilder = new DbContextOptionsBuilder<MeltixContext>();
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
 
-                using (var dbContext = new MeltixContext(optionsBuilder.Options))
+                using (var dbContext = new MeltixContext(optionsBuilder.Options, null))
                 {
                     // Appliquer les migrations
                     dbContext.Database.Migrate();

@@ -13,6 +13,7 @@ namespace Infrastructure
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ITagRepository, TagRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ITokenRepository, TokenRepository>();
 
             return services;
         }

@@ -15,7 +15,7 @@ namespace Meltix.IntegrationTests
                 .UseSqlite(connection)
                 .Options;
 
-            var context = new MeltixContext(options);
+            var context = new MeltixContext(options, null);
 
             context.Database.EnsureCreated();
 

@@ -16,6 +16,8 @@ namespace Domain.Entities
 
         public DateTime? LastChangePassword { get;private set; }
 
+        public ICollection<TokenInfo> Tokens { get; private set; }
+
         public User()
         {
 
