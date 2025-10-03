@@ -23,6 +23,8 @@ namespace Application.Mappings
             CreateMap<RoleDTO, Role>()
                     .ConvertUsingEnumMapping(opt => opt.MapByName().MapValue(RoleDTO.Admin, Role.Administrator));
 
+            CreateMap<UserDTO, User>();
+
 
         }
     }

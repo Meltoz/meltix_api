@@ -20,11 +20,11 @@ namespace Domain.ValueObjects
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Password can't be empty");
 
-            if (value.Length < 3 || value.Length > 50)
-                throw new ArgumentException("Password must be between 3 and 50 character");
+            //if (value.Length < 3)
+            //    throw new ArgumentException("Password must be between 3 and 50 character");
 
-            if (!Regex.IsMatch(value, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-                throw new ArgumentException("Password must contains atleast a minus, a capital, a digit and a minimum of 8 characters");
+            //if (!Regex.IsMatch(value, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
+            //    throw new ArgumentException("Password must contains atleast a minus, a capital, a digit and a minimum of 8 characters");
 
             return FromPlainText(value);
         }

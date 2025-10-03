@@ -18,7 +18,7 @@ namespace Infrastructure.Persistence
             var optionsBuilder = new DbContextOptionsBuilder<MeltixContext>();
             optionsBuilder.UseSqlite(config.GetConnectionString("DefaultConnection"));
 
-            return new MeltixContext(optionsBuilder.Options);
+            return new MeltixContext(optionsBuilder.Options, null);
         }
     }
 }

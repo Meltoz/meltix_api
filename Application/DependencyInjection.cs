@@ -13,6 +13,8 @@ namespace Application
             services.AddScoped<CategoryService>();
             services.AddScoped<TagService>();
             services.AddScoped<UserService>();
+            services.AddScoped<AesEncryptionService>();
+            services.AddScoped<TokenService>();
             services.AddSingleton<IFfMpegService, FfmpegService>();
             services.AddTransient<IThumbnailService, ThumbnailService>();
             services.AddTransient<IMediaInfoService, MediaInfoService>();

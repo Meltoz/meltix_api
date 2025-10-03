@@ -24,6 +24,11 @@ namespace Application.Mappings
                 .ConvertUsingEnumMapping(opt => opt.MapByName().MapValue(Role.Administrator, RoleDTO.Admin));
 
             CreateMap<User, UserDTO>();
+
+            CreateMap<TokenInfo, TokenDTO>()
+                .ForMember(dest => dest.RefreshExpiresAt, opt => opt.MapFrom(src => src.ExpiresAt))
+                .ForMember(dest => dest.AccessToken, opt => opt.MapFrom(src => src.AccessToken.Value))
+                .ForMember(dest => dest.RefreshToken, opt => opt.MapFrom(src => src.RefreshToken.Value));
         }
     }
 }

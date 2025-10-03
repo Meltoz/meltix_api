@@ -1,5 +1,7 @@
-﻿using Domain.Entities;
+﻿using Application.Services;
+using Domain.Entities;
 using Domain.ValueObjects;
+using Infrastructure.Converters;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -7,6 +9,8 @@ namespace Infrastructure.Data
 {
     public class MeltixContext : DbContext
     {
+        private readonly AesEncryptionService _encryptionService;
+
         // DBSet
         public DbSet<Video> Videos { get; set; }
 
@@ -16,18 +20,22 @@ namespace Infrastructure.Data
 
         public DbSet<User> Users { get; set; }
 
+        public DbSet<TokenInfo> Tokens { get; set; }
+
         public MeltixContext()
         {
 
         }
 
-        public MeltixContext(DbContextOptions<MeltixContext> options) : base(options)
+        public MeltixContext(DbContextOptions<MeltixContext> options, AesEncryptionService es) : base(options)
         {
-
+            _encryptionService = es;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            var tokenConverter = new TokenValueConverter(_encryptionService, null);
+
             modelBuilder.Entity<Video>()
                 .HasMany(v => v.Tags)
                 .WithMany(c => c.Videos)
@@ -58,6 +66,24 @@ namespace Infrastructure.Data
                         .HasColumnName("Password")
                         .IsRequired();
                 });
+            });
+
+            modelBuilder.Entity<TokenInfo>(builder =>
+            {
+                builder.HasKey(t => t.Id);
+
+                builder.Property(t => t.AccessToken)
+                .HasConversion(tokenConverter);
+
+                builder.Property(t => t.RefreshToken)
+                .HasConversion(tokenConverter);
+
+                builder
+                .HasOne(t => t.User)
+                .WithMany(u => u.Tokens)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
             });
 
             base.OnModelCreating(modelBuilder);

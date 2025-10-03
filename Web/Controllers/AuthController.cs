@@ -3,9 +3,15 @@ using Application.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Shared.Configuration;
 using Shared.Exceptions;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using Web.Constantes;
+using Web.Extensions;
 using Web.ViewModels;
 
 namespace Web.Controllers
@@ -14,12 +20,20 @@ namespace Web.Controllers
     [ApiController]
     [AllowAnonymous]
     [Route("api")]
-    public class AuthController(UserService us, JwtService jwts, IMapper m) : ControllerBase
+    public class AuthController : ControllerBase
     {
-        private readonly UserService _userService = us;
-        private readonly JwtService _jwtService = jwts;
-        private readonly IMapper _mapper = m;
+        private readonly UserService _userService;
+        private readonly TokenService _tokenService;
+        private readonly IMapper _mapper;
+        private readonly string _key;
 
+        public AuthController(UserService us, TokenService ts, IMapper m, IOptions<AuthConfiguration> config)
+        {
+            _userService = us;
+            _tokenService = ts;
+            _mapper = m;
+            _key = config.Value.Key;
+        }
 
         [HttpPost]
         [Route("login")]
@@ -49,16 +63,11 @@ namespace Web.Controllers
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
-            var accessToken = _jwtService.CreateAccessToken(claims);
-            Response.Cookies.Append(ApiConstantes.AccessTokenCookieName, accessToken, new CookieOptions
-            {
-                Expires = DateTime.UtcNow.AddDays(1),
-                HttpOnly = false,
-                Path = "/",
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Domain = "localhost"
-            });
+            await _tokenService.RevokeAllToken(user.Id);
+            var token = await _tokenService.CreateTokenAsync(user.Id, claims);
+
+            Response.AppendCookie(ApiConstantes.AccessTokenCookieName, token.AccessToken, TimeSpan.FromHours(5), false, domain: "localhost");
+            Response.AppendCookie(ApiConstantes.RefreshTokenCookieName, token.RefreshToken, TimeSpan.FromDays(30), domain: "localhost");
 
             return Ok();
         }
@@ -67,6 +76,31 @@ namespace Web.Controllers
         [Route("refresh")]
         public async Task<IActionResult> Refresh() 
         {
+            var oldRefreshToken = Request.Cookies[ApiConstantes.RefreshTokenCookieName];
+            if (string.IsNullOrWhiteSpace(oldRefreshToken))
+                return BadRequest();
+
+            var storedToken = await _tokenService.GetTokenByRefreshToken(oldRefreshToken);
+
+            var principal = GetPrincipalFromExpiredToken(storedToken.AccessToken);
+
+            var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            if (storedToken == null ||
+                storedToken.IsRevoked ||
+                storedToken.RefreshExpiresAt < DateTime.UtcNow)
+            {
+                await _tokenService.RevokeAllToken(userId);
+                Response.DeleteCookie(ApiConstantes.AccessTokenCookieName, domain: "localhost");
+                Response.DeleteCookie(ApiConstantes.RefreshTokenCookieName, domain: "localhost");
+                return Unauthorized();
+            }
+
+            var token = await _tokenService.CreateTokenAsync(userId, principal.Claims);
+
+            Response.AppendCookie(ApiConstantes.AccessTokenCookieName, token.AccessToken, expiryDuration: TimeSpan.FromHours(5), httpOnly: false, domain: "localhost");
+            Response.AppendCookie(ApiConstantes.RefreshTokenCookieName, token.RefreshToken, expiryDuration: TimeSpan.FromDays(30), httpOnly: true, domain: "localhost");
+
             return Ok();
         }
 
@@ -74,14 +108,8 @@ namespace Web.Controllers
         [Route("logout")]
         public async Task<IActionResult> Logout() 
         {
-            Response.Cookies.Append(ApiConstantes.AccessTokenCookieName, "", new CookieOptions
-            {
-                Expires = DateTime.UtcNow.AddDays(-1),
-                HttpOnly = false,
-                Path = "/",
-                Secure = true,
-                Domain = "localhost"
-            });
+            Response.DeleteCookie(ApiConstantes.AccessTokenCookieName, httpOnly: false, domain: "localhost");
+            Response.DeleteCookie(ApiConstantes.RefreshTokenCookieName, httpOnly: true,  domain: "localhost");
 
             return Ok();
         }
@@ -98,6 +126,33 @@ namespace Web.Controllers
             var user = await _userService.GetByIdAsync(userId);
 
             return Ok(_mapper.Map<UserAdminVM>(user));
+        }
+
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var tokenValidation = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
+                ValidateLifetime = false
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, tokenValidation, out var securityToken);
+                if (securityToken is not JwtSecurityToken jwtSecurity || !jwtSecurity.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return null;
+                }
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 
