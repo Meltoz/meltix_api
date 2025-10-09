@@ -98,8 +98,8 @@ namespace Web.Controllers
 
             var token = await _tokenService.CreateTokenAsync(userId, principal.Claims);
 
-            Response.AppendCookie(ApiConstantes.AccessTokenCookieName, token.AccessToken, expiryDuration: TimeSpan.FromHours(5), httpOnly: false, domain: "localhost");
-            Response.AppendCookie(ApiConstantes.RefreshTokenCookieName, token.RefreshToken, expiryDuration: TimeSpan.FromDays(30), httpOnly: true, domain: "localhost");
+            Response.AppendCookie(ApiConstantes.AccessTokenCookieName, token.AccessToken, expiryDuration: TimeSpan.FromHours(5), httpOnly: false);
+            Response.AppendCookie(ApiConstantes.RefreshTokenCookieName, token.RefreshToken, expiryDuration: TimeSpan.FromDays(30), httpOnly: true);
 
             return Ok();
         }
@@ -108,8 +108,8 @@ namespace Web.Controllers
         [Route("logout")]
         public async Task<IActionResult> Logout() 
         {
-            Response.DeleteCookie(ApiConstantes.AccessTokenCookieName, httpOnly: false, domain: "localhost");
-            Response.DeleteCookie(ApiConstantes.RefreshTokenCookieName, httpOnly: true,  domain: "localhost");
+            Response.DeleteCookie(ApiConstantes.AccessTokenCookieName, httpOnly: false, domain:"localhost");
+            Response.DeleteCookie(ApiConstantes.RefreshTokenCookieName, httpOnly: true, domain:"localhost");
 
             return Ok();
         }
