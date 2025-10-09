@@ -8,7 +8,6 @@
                                          TimeSpan? expiryDuration = null,
                                          bool httpOnly = true,
                                          bool secure = true,
-                                         SameSiteMode samesite = SameSiteMode.None,
                                          string path = "/",
                                          string domain = null)
         {
@@ -16,7 +15,7 @@
             {
                 HttpOnly = httpOnly,
                 Secure = secure,
-                SameSite = samesite,
+                SameSite = SameSiteMode.None,
                 Path = path,
             };
 
@@ -41,7 +40,8 @@
                 Path = path,
                 SameSite= SameSiteMode.None,
                 Secure= secure,
-                HttpOnly= httpOnly
+                HttpOnly= httpOnly,
+                MaxAge = TimeSpan.Zero
             };
 
             if (!string.IsNullOrEmpty(domain)) 

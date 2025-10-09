@@ -72,7 +72,17 @@ namespace Web
             services.AddDbContext<MeltixContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}"));
 
-
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("front", policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                    .AllowCredentials()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .WithExposedHeaders(ApiConstantes.HeaderTotalCount);
+                });
+            });
 
             // App generation<
             var app = builder.Build();
@@ -101,13 +111,7 @@ namespace Web
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(c => c
-                .WithOrigins("http://localhost:3000")
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .WithExposedHeaders(ApiConstantes.HeaderTotalCount)
-                .AllowCredentials()
-            );
+            app.UseCors("front");
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseHttpsRedirection();
@@ -115,6 +119,7 @@ namespace Web
             app.UseAuthorization();
 
             app.MapControllers();
+
 
             app.Run();
         }
