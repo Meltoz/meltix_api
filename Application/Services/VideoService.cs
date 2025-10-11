@@ -3,21 +3,36 @@ using Application.Interfaces.Repository;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Shared;
+using Shared.Configuration;
 using Shared.Enums.Sorting.Video;
 using Shared.Exceptions;
 using System.Threading.Channels;
 
 namespace Application.Services
 {
-    public class VideoService(IThumbnailService ts, IMediaInfoService ms, IVideoRepository vr, ITagRepository tr, IMapper m)
+    public class VideoService
     {
-        private readonly IVideoRepository _videoRepo = vr;
-        private readonly IThumbnailService _thumbnailService = ts;
-        private readonly IMediaInfoService _mediaInfoService = ms;
-        private readonly ITagRepository _tagRepository = tr;
-        private readonly IMapper _mapper = m;
-        private readonly string _pathToWatch = @"E:\ToDelete";
+        private readonly IVideoRepository _videoRepo;
+        private readonly IThumbnailService _thumbnailService;
+        private readonly IMediaInfoService _mediaInfoService;
+        private readonly ITagRepository _tagRepository;
+        private readonly IMapper _mapper;
+        private readonly string _pathToWatch;
+        private readonly string _pathThumbnail;
+
+        public VideoService(IThumbnailService ts, IMediaInfoService ms, IVideoRepository vr, ITagRepository tr, IMapper m, IOptions<ConnectionConfiguration> cf)
+        {
+            _videoRepo = vr;
+            _thumbnailService = ts;
+            _mediaInfoService = ms;
+            _tagRepository = tr;
+            _mapper = m;
+            _pathThumbnail = cf.Value.Thumbnails;
+            _pathToWatch = cf.Value.VideosFolder;
+        }
 
         public async Task<VideoDTO> FindBySlugAsync(string slug)
         {
@@ -132,8 +147,8 @@ namespace Application.Services
             }, async (file, ct) =>
             {
                 var inputPath = Path.Combine(_pathToWatch, file);
-                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(file)}.jpg";
-                var ouputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
+                var ouputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(file)}.jpg";
+
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 var timeSpanThumbnail = TimeSpan.FromSeconds(1);
 
@@ -170,9 +185,8 @@ namespace Application.Services
                 if (!File.Exists(inputPath))
                     throw new FileNotFoundException($"Video file not found: {inputPath}");
 
-                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
+                var outputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
 
-                var outputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
                 try
@@ -196,8 +210,8 @@ namespace Application.Services
 
             if(videoDTO.ThumbnailFile != null)
             {
-                var endPath = $@"Data\Thumbnails\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
-                var outputPath = Path.Combine(AppContext.BaseDirectory, @"..", "..", "..", "..", endPath);
+                var outputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
+
                 using (var stream = new FileStream(outputPath, FileMode.Create))
                 {
                     await videoDTO.ThumbnailFile.CopyToAsync(stream);

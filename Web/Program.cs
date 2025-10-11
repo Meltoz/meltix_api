@@ -25,6 +25,11 @@ namespace Web
             services.Configure<AuthConfiguration>(builder.Configuration.GetSection("Auth"));
             services.Configure<FfmpegConfiguration>(builder.Configuration.GetSection("FFmpeg"));
             services.Configure<EncryptionConfiguration>(builder.Configuration.GetSection("Encryption"));
+            services.Configure<ConnectionConfiguration>(builder.Configuration.GetSection("Connection"));
+
+            var connectionConfig = builder.Configuration
+    .GetSection("Connection")
+    .Get<ConnectionConfiguration>();
 
             services.AddResponseCaching();
 
@@ -64,13 +69,9 @@ namespace Web
             services.AddAutoMapper(cfg => { }, typeof(DtoToViewModelProfile), typeof(ViewModelToDtoProfile));
 
             // Créer le dossier Data s'il n'existe pas
-            var dataDir = Path.Combine(builder.Environment.ContentRootPath, "..", "Data");
-            Directory.CreateDirectory(dataDir);
-
-            var dbPath = Path.Combine(dataDir, "meltix.db");
 
             services.AddDbContext<MeltixContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"));
+                options.UseSqlite($"Data Source={connectionConfig.ConnectionString}"));
 
             services.AddCors(opt =>
             {
@@ -89,12 +90,9 @@ namespace Web
 
             using (var scope = app.Services.CreateScope())
             {
-
-                Directory.CreateDirectory(dataDir);
-
                 // Créer une instance temporaire du DbContext avec SQLite
                 var optionsBuilder = new DbContextOptionsBuilder<MeltixContext>();
-                optionsBuilder.UseSqlite($"Data Source={dbPath}");
+                optionsBuilder.UseSqlite($"Data Source={connectionConfig.ConnectionString}");
 
                 using (var dbContext = new MeltixContext(optionsBuilder.Options, null))
                 {
