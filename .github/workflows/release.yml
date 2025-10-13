@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    branches: 
+      - 'release/*'
+
+env: 
+  REGISTRY: meltoz
+  IMAGE_NAME: meltix_api
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+            # Extract version from branch name
+      - name: Extract version from branch name
+        id: extract_version
+        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: Login to docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{env.REGISTRY}}
+          password: ${{secrets.PASS_DOCKER}}
+
+      # Construire l'image Docker
+      - name: Build Docker image
+        run: docker build -t ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{env.VERSION}} .
+
+      #Tag current version as latest
+      - name: Tag image as latest
+        run: docker tag ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{env.VERSION}} ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
+
+      # Pousser l'image Docker vers le registre
+      - name: Push Docker image
+        run: |
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{env.VERSION}}
+          docker push ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:latest
+
+      - name: Merge release branch into master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          git config --global user.email "make-release[bot]@users.noreply.github.com"
+          git config --global user.name "make-release[bot]"
+
+          git fetch origin
+          git checkout master
+          git reset --hard origin/${GITHUB_REF#refs/heads/}
+          git push --force origin master
+
+      - name: Create tag on master branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          git config --global user.email "make-release[bot]@users.noreply.github.com"
+          git config --global user.name "make-release[bot]"
+          git fetch origin master
+          git checkout master
+          git tag -a "v${{ env.VERSION }}" -m "Release version ${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
+
+      - name: Delete release branch
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          git push origin --delete $BRANCH_NAME
