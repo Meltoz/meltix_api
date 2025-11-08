@@ -19,16 +19,24 @@ namespace Application.Services
         private readonly IThumbnailService _thumbnailService;
         private readonly IMediaInfoService _mediaInfoService;
         private readonly ITagRepository _tagRepository;
+        private readonly FileService _fileService;
         private readonly IMapper _mapper;
         private readonly string _pathToWatch;
         private readonly string _pathThumbnail;
 
-        public VideoService(IThumbnailService ts, IMediaInfoService ms, IVideoRepository vr, ITagRepository tr, IMapper m, IOptions<ConnectionConfiguration> cf)
+        public VideoService(IThumbnailService ts, 
+            IMediaInfoService ms, 
+            IVideoRepository vr, 
+            ITagRepository tr, 
+            FileService fs,
+            IMapper m, 
+            IOptions<ConnectionConfiguration> cf)
         {
             _videoRepo = vr;
             _thumbnailService = ts;
             _mediaInfoService = ms;
             _tagRepository = tr;
+            _fileService = fs;
             _mapper = m;
             _pathThumbnail = cf.Value.Thumbnails;
             _pathToWatch = cf.Value.VideosFolder;
@@ -170,20 +178,22 @@ namespace Application.Services
             if (videoEntity == null)
                 throw new EntityNotFoundException($"Video with id '{videoDTO.Id}' not found");
 
+            var pathVideo = Path.Combine(_pathToWatch, videoEntity.Path);
+
+
             if (videoEntity.Title != videoDTO.Title)
             {
                 videoEntity.ChangeTitle(videoDTO.Title);
+                var extension = Path.GetExtension(pathVideo);
+                var newName = $"{videoEntity.Slug}{extension}";
+                var path = _fileService.Rename(pathVideo, newName);
+                videoEntity.ChangePath(newName);
             }
 
             if(videoDTO.Timecode != TimeSpan.Zero)
             {
-                var fileName = Path.GetFileName(videoEntity.Path);
-                if (string.IsNullOrEmpty(fileName) || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-                    throw new ArgumentException("Invalid file name");
-
-                var inputPath = Path.Combine(_pathToWatch, fileName);
-                if (!File.Exists(inputPath))
-                    throw new FileNotFoundException($"Video file not found: {inputPath}");
+                if (!File.Exists(pathVideo))
+                    throw new FileNotFoundException($"Video file not found: {pathVideo}");
 
                 var outputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
 
@@ -191,7 +201,7 @@ namespace Application.Services
 
                 try
                 {
-                    var thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(inputPath, outputPath, videoDTO.Timecode.Value, cts.Token);
+                    var thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(pathVideo, outputPath, videoDTO.Timecode.Value, cts.Token);
                     videoEntity.ChangeThumbnail(thumbnailPath);
                 }
                 catch (OperationCanceledException)
