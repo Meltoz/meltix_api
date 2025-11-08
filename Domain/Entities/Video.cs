@@ -86,6 +86,12 @@ namespace Domain.Entities
             Slug = SlugGenerator.Generate(title);
         }
 
+        public void ChangePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new ArgumentException("path");
+            Path = path;
+        } 
         public void ChangeThumbnail(string thumbnail)
         {
             if (string.IsNullOrEmpty(thumbnail.Trim()))

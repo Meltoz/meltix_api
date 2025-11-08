@@ -209,5 +209,155 @@ namespace Meltix.UnitTests.Domain
             Assert.IsType<ArgumentException>(caughtException);
             Assert.Equal("Title must be defined", caughtException.Message);
         }
+
+        #region ChangePath Tests
+        [Fact]
+        public void ChangePath_WithValidPath_ShouldUpdatePath()
+        {
+            // Arrange
+            var instance = new Video();
+            string validPath = @"C:\Users\Documents";
+
+            // Act
+            instance.ChangePath(validPath);
+
+            // Assert
+            Assert.Equal(validPath, instance.Path);
+        }
+
+        [Fact]
+        public void ChangePath_WithNullPath_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => instance.ChangePath(null));
+            Assert.Equal("path", exception.Message);
+        }
+
+        [Fact]
+        public void ChangePath_WithEmptyPath_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => instance.ChangePath(string.Empty));
+            Assert.Equal("path", exception.Message);
+        }
+
+        [Fact]
+        public void ChangePath_WithWhitespacePath_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => instance.ChangePath("   "));
+            Assert.Equal("path", exception.Message);
+        }
+
+        [Theory]
+        [InlineData(@"C:\Program Files")]
+        [InlineData(@"D:\Data\Files")]
+        [InlineData("/home/user/documents")]
+        [InlineData("relative/path")]
+        public void ChangePath_WithVariousValidPaths_ShouldUpdatePath(string path)
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act
+            instance.ChangePath(path);
+
+            // Assert
+            Assert.Equal(path, instance.Path);
+        }
+
+        [Fact]
+        public void ChangePath_WithTabsOnly_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => instance.ChangePath("\t\t"));
+            Assert.Equal("path", exception.Message);
+        }
+
+        [Fact]
+        public void ChangePath_WithNewLinesOnly_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => instance.ChangePath("\n\r\n"));
+            Assert.Equal("path", exception.Message);
+        }
+
+        [Fact]
+        public void ChangePath_CalledMultipleTimes_ShouldUpdateToLatestPath()
+        {
+            // Arrange
+            var instance = new Video();
+            string firstPath = @"C:\First";
+            string secondPath = @"C:\Second";
+
+            // Act
+            instance.ChangePath(firstPath);
+            instance.ChangePath(secondPath);
+
+            // Assert
+            Assert.Equal(secondPath, instance.Path);
+        }
+
+        [Theory]
+        [InlineData("a")] // Chemin minimal (1 caractère)
+        [InlineData(" valid ")] // Espaces au début/fin (valide car contient du texte)
+        public void ChangePath_WithEdgeCaseValidPaths_ShouldUpdatePath(string path)
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act
+            instance.ChangePath(path);
+
+            // Assert
+            Assert.Equal(path, instance.Path);
+        }
+
+        [Fact]
+        public void ChangePath_WithVeryLongPath_ShouldUpdatePath()
+        {
+            // Arrange
+            var instance = new Video();
+            string longPath = new string('a', 500); // Chemin très long
+
+            // Act
+            instance.ChangePath(longPath);
+
+            // Assert
+            Assert.Equal(longPath, instance.Path);
+        }
+
+        [Theory]
+        [InlineData(@"C:\Path\With\Special\Chars\[brackets]")]
+        [InlineData(@"C:\Path With Spaces\file.txt")]
+        [InlineData(@"\\network\share\path")]
+        [InlineData("path/with/special/chars/@#$%")]
+        public void ChangePath_WithSpecialCharacters_ShouldUpdatePath(string path)
+        {
+            // Arrange
+            var instance = new Video();
+
+            // Act
+            instance.ChangePath(path);
+
+            // Assert
+            Assert.Equal(path, instance.Path);
+        }
+        #endregion
     }
 }

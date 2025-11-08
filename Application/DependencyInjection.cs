@@ -19,6 +19,7 @@ namespace Application
             services.AddTransient<IThumbnailService, ThumbnailService>();
             services.AddTransient<IMediaInfoService, MediaInfoService>();
             services.AddTransient<JwtService>();
+            services.AddTransient<FileService>();
             services.AddHostedService<FolderScanService>(); 
 
             services.AddAutoMapper(cfg => { }, typeof(DtoToEntitiesProfile), typeof(EntitiesToDtoProfile));
