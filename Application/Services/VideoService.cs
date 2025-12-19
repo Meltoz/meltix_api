@@ -3,7 +3,7 @@ using Application.Interfaces.Repository;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shared;
 using Shared.Configuration;
@@ -23,6 +23,7 @@ namespace Application.Services
         private readonly IMapper _mapper;
         private readonly string _pathToWatch;
         private readonly string _pathThumbnail;
+        private readonly ILogger<VideoService> _logger;
 
         public VideoService(IThumbnailService ts, 
             IMediaInfoService ms, 
@@ -30,6 +31,7 @@ namespace Application.Services
             ITagRepository tr, 
             FileService fs,
             IMapper m, 
+            ILogger<VideoService> l,
             IOptions<ConnectionConfiguration> cf)
         {
             _videoRepo = vr;
@@ -38,6 +40,7 @@ namespace Application.Services
             _tagRepository = tr;
             _fileService = fs;
             _mapper = m;
+            _logger = l;
             _pathThumbnail = cf.Value.Thumbnails;
             _pathToWatch = cf.Value.VideosFolder;
         }
@@ -90,8 +93,9 @@ namespace Application.Services
             {
                 return;
             }
+            _logger.LogInformation($"Vérification dans {_pathToWatch}");
 
-            var filesOnDisk = Directory.GetFiles(_pathToWatch)
+           var filesOnDisk = Directory.GetFiles(_pathToWatch)
                                         .Where(f => f.EndsWith(".mp4"))
                                        .Select(Path.GetFileName)
                                        .ToHashSet();
@@ -155,7 +159,7 @@ namespace Application.Services
             }, async (file, ct) =>
             {
                 var inputPath = Path.Combine(_pathToWatch, file);
-                var ouputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(file)}.jpg";
+                var ouputPath = Path.Combine(_pathThumbnail, $"{Path.GetFileNameWithoutExtension(file)}.jpg");
 
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 var timeSpanThumbnail = TimeSpan.FromSeconds(1);
@@ -174,85 +178,127 @@ namespace Application.Services
 
         public async Task<VideoDTO> UpdateVideoAsync(UpdateVideoDTO videoDTO)
         {
-            var videoEntity = await _videoRepo.GetByIdAsync(videoDTO.Id);
-            if (videoEntity == null)
-                throw new EntityNotFoundException($"Video with id '{videoDTO.Id}' not found");
-
+            var videoEntity = await GetVideoEntityAsync(videoDTO.Id);
             var pathVideo = Path.Combine(_pathToWatch, videoEntity.Path);
 
+            await UpdateThumbnailAsync(videoEntity, videoDTO, pathVideo);
+            await UpdateTitleAndFileAsync(videoEntity, videoDTO.Title, pathVideo);
+            await UpdateTagsAsync(videoEntity, videoDTO.Tags);
+            UpdateBasicProperties(videoEntity, videoDTO);
 
-            if (videoEntity.Title != videoDTO.Title)
+            var video = await _videoRepo.UpdateAsync(videoEntity);
+            return _mapper.Map<VideoDTO>(video);
+        }
+
+        private async Task<Video> GetVideoEntityAsync(Guid id)
+        {
+            var entity = await _videoRepo.GetByIdAsync(id);
+            if (entity == null)
+                throw new EntityNotFoundException($"Video with id '{id}' not found");
+            return entity;
+        }
+
+        private async Task UpdateTitleAndFileAsync(Video entity, string newTitle, string currentPath)
+        {
+            if (entity.Title == newTitle) return;
+
+            entity.ChangeTitle(newTitle);
+            var extension = Path.GetExtension(currentPath);
+            var newName = $"{entity.Slug}{extension}";
+            _fileService.Rename(currentPath, newName);
+            entity.ChangePath(newName);
+        }
+
+        private async Task UpdateThumbnailAsync(Video entity, UpdateVideoDTO dto, string videoPath)
+        {
+            if (dto.ThumbnailFile != null)
             {
-                videoEntity.ChangeTitle(videoDTO.Title);
-                var extension = Path.GetExtension(pathVideo);
-                var newName = $"{videoEntity.Slug}{extension}";
-                var path = _fileService.Rename(pathVideo, newName);
-                videoEntity.ChangePath(newName);
+                await UpdateThumbnailFromFileAsync(entity, dto.ThumbnailFile);
+                return;
             }
 
-            if(videoDTO.Timecode != TimeSpan.Zero)
+            if (dto.Timecode != TimeSpan.Zero)
             {
-                if (!File.Exists(pathVideo))
-                    throw new FileNotFoundException($"Video file not found: {pathVideo}");
-
-                var outputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
-
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-                try
-                {
-                    var thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(pathVideo, outputPath, videoDTO.Timecode.Value, cts.Token);
-                    videoEntity.ChangeThumbnail(thumbnailPath);
-                }
-                catch (OperationCanceledException)
-                {
-                    if (File.Exists(outputPath))
-                        File.Delete(outputPath);
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    if (File.Exists(outputPath))
-                        File.Delete(outputPath);
-                    throw;
-                }
+                await GenerateThumbnailFromTimecodeAsync(entity, videoPath, dto.Timecode.Value);
             }
+        }
 
-            if(videoDTO.ThumbnailFile != null)
+        private async Task UpdateThumbnailFromFileAsync(Video entity, ThumbnailFileData file)
+        {
+            var outputPath = GetThumbnailPath(entity);
+            using var fileStream = new FileStream(outputPath, FileMode.Create);
+            await file.Stream.CopyToAsync(fileStream);
+            entity.ChangeThumbnail(outputPath);
+        }
+
+        private async Task GenerateThumbnailFromTimecodeAsync(Video entity, string videoPath, TimeSpan timecode)
+        {
+            if (!File.Exists(videoPath))
+                throw new FileNotFoundException($"Video file not found: {videoPath}");
+
+            var outputPath = GetThumbnailPath(entity);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+            try
             {
-                var outputPath = $@"{_pathThumbnail}\{Path.GetFileNameWithoutExtension(videoEntity.Path)}.jpg";
-
-                using (var stream = new FileStream(outputPath, FileMode.Create))
-                {
-                    await videoDTO.ThumbnailFile.CopyToAsync(stream);
-                }
-                videoDTO.Thumbnail = outputPath;
+                var thumbnailPath = await _thumbnailService.GenerateThumbnailAsync(
+                    videoPath, outputPath, timecode, cts.Token);
+                entity.ChangeThumbnail(thumbnailPath);
             }
+            catch
+            {
+                CleanupThumbnailFile(outputPath);
+                throw;
+            }
+        }
 
-            var dtoTags = new HashSet<string>(videoDTO.Tags);                
-            var entityTags = new HashSet<string>(videoEntity.Tags.Select(t => t.Value));
+        private void CleanupThumbnailFile(string path)
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+
+        private string GetThumbnailPath(Video entity)
+        {
+            return Path.Combine(_pathThumbnail,
+                $"{Path.GetFileNameWithoutExtension(entity.Path)}.jpg");
+        }
+
+        private async Task UpdateTagsAsync(Video entity, IEnumerable<string> newTags)
+        {
+            var dtoTags = new HashSet<string>(newTags.Select(t => t.Trim().ToLower()));
+            var entityTags = new HashSet<string>(entity.Tags.Select(t => t.Value));
 
             var tagsToAdd = dtoTags.Except(entityTags);
-
             var tagsToRemove = entityTags.Except(dtoTags);
 
-            foreach (var tagValue in tagsToAdd)
-            {
-                var tagFind= await _tagRepository.GetByNameAsync(tagValue);
-                var t = tagFind != null ? tagFind : new Tag(tagValue);
+            await AddTagsAsync(entity, tagsToAdd);
+            RemoveTags(entity, tagsToRemove);
+        }
 
-                videoEntity.AddTags(t);
-            }
-            foreach (var tagValue in tagsToRemove)
+        private async Task AddTagsAsync(Video entity, IEnumerable<string> tagValues)
+        {
+            foreach (var tagValue in tagValues)
             {
-                var tag = videoEntity.Tags.First(t => t.Value == tagValue);
-                videoEntity.RemoveTags(tag);
+                var tag = await _tagRepository.GetByNameAsync(tagValue)
+                    ?? new Tag(tagValue);
+                entity.AddTags(tag);
             }
-            videoEntity.Description = videoDTO.Description;
-            videoEntity.CategoryId = videoDTO.Category.Id;
-            var video = await _videoRepo.UpdateAsync(videoEntity);
+        }
 
-            return _mapper.Map<VideoDTO>(video);
+        private void RemoveTags(Video entity, IEnumerable<string> tagValues)
+        {
+            foreach (var tagValue in tagValues)
+            {
+                var tag = entity.Tags.First(t => t.Value == tagValue);
+                entity.RemoveTags(tag);
+            }
+        }
+
+        private void UpdateBasicProperties(Video entity, UpdateVideoDTO dto)
+        {
+            entity.Description = dto.Description;
+            entity.CategoryId = dto.Category.Id;
         }
     }
 }

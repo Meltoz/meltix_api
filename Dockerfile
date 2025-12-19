@@ -9,6 +9,11 @@ RUN dotnet publish -c Release -o out
 
 #Serve Stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
+
+# Installer ffmpeg Linux
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /App
 COPY --from=build /App/out .
 ENTRYPOINT ["dotnet", "Web.dll"]

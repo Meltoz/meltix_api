@@ -8,10 +8,10 @@ namespace Web.ViewModels
         public Guid Id { get; set; }
 
         [Required]
-        [StringLength(50, MinimumLength = 6)]
+        [StringLength(100, MinimumLength = 6)]
         public string Title { get; set; } = string.Empty;
 
-        [StringLength(500, MinimumLength = 0)]
+        [StringLength(1000, MinimumLength = 0)]
         public string? Description { get; set; } = string.Empty;
 
         public string? Timecode { get; set; }

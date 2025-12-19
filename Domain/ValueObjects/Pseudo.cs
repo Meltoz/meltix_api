@@ -18,8 +18,8 @@ namespace Domain.ValueObjects
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentException("Pseudo can't be empty");
 
-            if (value.Length < 3 || value.Length > 50)
-                throw new ArgumentException("Must be between 3 and 50 character");
+            if (value.Length < 3 || value.Length > 100)
+                throw new ArgumentException("Must be between 3 and 100 character");
 
             if (!Regex.IsMatch(value, @"^[\d\w_-]+$"))
                 throw new ArgumentException("Must contains letter and digit only");

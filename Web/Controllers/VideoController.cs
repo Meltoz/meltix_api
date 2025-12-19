@@ -2,7 +2,9 @@
 using Application.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Shared;
+using Shared.Configuration;
 using Shared.Enums.Sorting.Video;
 using System.Text.RegularExpressions;
 using Web.Constantes;
@@ -12,11 +14,13 @@ namespace Web.Controllers
 {
     [ApiController]
     [Route("/api/[controller]/[action]")]
-    public class VideoController(VideoService vs, CategoryService cs, IMapper m) : ControllerBase
+    public class VideoController(VideoService vs, CategoryService cs, IOptions<ConnectionConfiguration> cf, IMapper m) : ControllerBase
     {
         private readonly VideoService _videoService = vs;
         private readonly CategoryService _categoryService = cs;
         private readonly IMapper _mapper = m;
+        private readonly string _pathThumbnail = cf.Value.Thumbnails;
+        private readonly string _pathVideos = cf.Value.VideosFolder;
 
         [HttpGet]
         public async Task<IActionResult> GetAllVideos(int pageIndex, int pageSize, string sort, string? search)
@@ -35,7 +39,6 @@ namespace Web.Controllers
             return Ok(videoVM);
         }
 
-        // ici on va pouvoir mettre un authorize sur la methode
         [HttpGet]
         public async Task<IActionResult> GetUnCategorisedVideos(int pageIndex, int pageSize, string sort, string? search)
         {
@@ -124,7 +127,7 @@ namespace Web.Controllers
 
             var path = AppContext.BaseDirectory;
 
-            var filePath = Path.Combine(path, "..", "..", "..", "..", video.Thumbnail);
+            var filePath = Path.Combine(_pathThumbnail, video.Thumbnail);
 
             if (!System.IO.File.Exists(filePath))
                 return NotFound();
@@ -138,7 +141,7 @@ namespace Web.Controllers
         {
             var videoFile = await _videoService.FindBySlugAsync(slug);
 
-            var filePath = Path.Combine($@"E:\ToDelete\{videoFile.Path}");
+            var filePath = Path.Combine($@"{_pathVideos}/{videoFile.Path}");
 
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return File(fileStream, "video/mp4", enableRangeProcessing: true);

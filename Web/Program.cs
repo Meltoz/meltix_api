@@ -77,7 +77,7 @@ namespace Web
             {
                 opt.AddPolicy("front", policy =>
                 {
-                    policy.WithOrigins("http://localhost:3000")
+                    policy.WithOrigins("http://localhost:3000", "http://localhost:30000")
                     .AllowCredentials()
                     .AllowAnyHeader()
                     .AllowAnyMethod()

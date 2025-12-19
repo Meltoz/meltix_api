@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-
-namespace Application.DTOs
+﻿namespace Application.DTOs
 {
     public class UpdateVideoDTO : VideoDTO
     {
         public TimeSpan? Timecode {  get; set; }
 
-        public IFormFile? ThumbnailFile { get; set; }
+        public ThumbnailFileData? ThumbnailFile { get; set; }
     }
 }

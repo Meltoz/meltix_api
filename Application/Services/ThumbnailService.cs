@@ -8,19 +8,15 @@ namespace Application.Services
 
         public async Task<string> GenerateThumbnailAsync(string videoPath, string outputPath, TimeSpan timecode, CancellationToken cancellationToken = default)
         {
-            string input = $"\"{Path.GetFullPath(videoPath).Replace("\\", "/")}\"";
-            string output = $"\"{Path.GetFullPath(outputPath).Replace("\\", "/")}\"";
-
-
             var args = new List<string>
             {
             "-ss", timecode.ToString(),
-            "-i", input,
+             "-i", videoPath,                           
             "-frames:v", "1",
             "-q:v", "2",
             "-y",
             "-update", "1",
-            output
+            outputPath
             };
 
             var t = string.Join(" ", args);
@@ -30,9 +26,8 @@ namespace Application.Services
             {
                 throw new Exception($"FFmep failed with exit code {exitCode}, arguments: {t}");
             }
-
-            return outputPath;
-
+            
+            return Path.GetFileName(outputPath);
         }
     }
 }
